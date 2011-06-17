@@ -45,9 +45,7 @@ function hubspot_uninstall() {
   variable_del('hubspot_apikey');
   variable_del('hubspot_log_code');
   
-  db_delete('webform_component')
-    ->condition('type', 'hubspot_url')
-    ->execute();
+  db_query("DELETE FROM {webform_component} WHERE `type` = 'hubspot_url'");
 }
 
 /**
