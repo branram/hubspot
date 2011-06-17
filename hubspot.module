@@ -10,7 +10,7 @@
 function hubspot_menu() {
   $items = array();
 
-  $items['admin/config/content/hubspot'] = array(
+  $items['admin/settings/hubspot'] = array(
     'title' => 'HubSpot integration settings',
     'description' => 'Set up HubSpot integration and leads insertion.',
     'page callback' => 'drupal_get_form',
