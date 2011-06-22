@@ -243,59 +243,63 @@ function hubspot_footer($main = 0) {
 }
 
 /**
- * Implements hook_block_info() to provide a HubSpot recent leads block.
+ * Implements hook_perm() to decide who gets access to the recent leads block
  */
-function hubspot_block_info() {
-  $blocks = array();
-  
-  $blocks['hubspot_recent'] = array(
-    'info' => t('HubSpot Recent Leads'),
-    'properties' => array('administrative' => TRUE),
-  );
-  
-  return $blocks;
+function hubspot_perm() {
+  return array('see recent hubspot leads');
 }
 
 /**
- * Implements hook_block_view() to provide a HubSpot recent leads block.
+ * Implements hook_block() to provide a HubSpot recent leads block.
  */
-function hubspot_block_view($delta = '') {
-  $block = array();
+function hubspot_block($op = 'list', $delta = 0, $edit = array()) {
+  switch ($op) {
+    case 'list':
+      $blocks = array();
   
-  switch ($delta) {
-    case 'hubspot_recent':
-      $block['subject'] = t('HubSpot Recent Leads');
-      
-      $leads = hubspot_get_recent();
-      
-      // This part of the HubSpot API returns HTTP error codes on failure, with no message
-      if (!empty($leads['Error']) || $leads['HTTPCode'] != 200) {
-        $block['content'] = t('An error occurred when fetching the HubSpot leads data: @error',
-                              array('@error' => !empty($leads['ErrorMessage']) ? $leads['ErrorMessage'] :
-                                    $leads['HTTPCode']));
-        return $block;
-      }
-      elseif (empty($leads['Data'])) {
-        $block['content'] = t('No leads to show.');
-        return $block;
-      }
-      
-      $block['content'] = array(
-        '#theme' => 'item_list',
-        '#items' => array(),
-        '#type' => 'ul',
+      $blocks[0] = array(
+        'info' => t('HubSpot Recent Leads'),
+        'status' => 0,
       );
-      
-      foreach($leads['Data'] as $lead) {
-        // Note that $lead->insertedAt comes in milliseconds, not seconds, since the epoch
-        $block['content']['#items'][] = l($lead->firstName . ' ' . $lead->lastName, $lead->leadLink) .
-                                        ' (' . format_date(intval($lead->insertedAt / 1000)) . ')';
-      }
-      
-      break;
-  }
   
-  return $block;
+      return $blocks;
+      break;
+    
+    case 'view':
+      if ($delta == 0 && user_access('see recent hubspot leads')) {
+        $block = array();
+        $block['subject'] = t('HubSpot Recent Leads');
+      
+        $leads = hubspot_get_recent();
+        
+        // This part of the HubSpot API returns HTTP error codes on failure, with no message
+        if (!empty($leads['Error']) || $leads['HTTPCode'] != 200) {
+          $block['content'] = t('An error occurred when fetching the HubSpot leads data: @error',
+                                array('@error' => !empty($leads['ErrorMessage']) ? $leads['ErrorMessage'] :
+                                      $leads['HTTPCode']));
+          return $block;
+        }
+        elseif (empty($leads['Data'])) {
+          $block['content'] = t('No leads to show.');
+          return $block;
+        }
+        
+        $items = array();
+        foreach($leads['Data'] as $lead) {
+          // Note that $lead->insertedAt comes in milliseconds, not seconds, since the epoch
+          $items[] = l($lead->firstName . ' ' . $lead->lastName, $lead->leadLink) . ' ' .
+                     t('(@time ago)',
+                       array('@time' => format_interval(time() - intval($lead->insertedAt / 1000))));
+        }
+        
+        $block['content'] = theme('item_list', $items);
+        return $block;
+      }
+      break;
+    
+    default: // ignore 'configure' and 'save'
+    break;
+  }
 }
 
 /**
