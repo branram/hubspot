@@ -10,9 +10,9 @@ Installation
 
 Upload and install the Webform module before this module. Install this module
 as usual, then head to the HubSpot integration settings under Configuration
-(admin/config/content/hubspot). Enter your HubSpot API key and the JavaScript
+(admin/settings/hubspot). Enter your HubSpot API key and the JavaScript
 tracking code. The API key is required if you want to use the "latest leads"
-dashboard block, but is not required for submitting leads from Webform.
+block, but is not required for submitting leads from Webform.
 
 You can request an API key from HubSpot through their website:
 
