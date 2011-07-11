@@ -155,7 +155,7 @@ function hubspot_webform_component_info() {
   return array(
     'hubspot_url' => array(
       'label' => t('HubSpot POST URL'),
-      'description' => t('A HubSpot API POST URL, to submit a form\'s contents to HubSpot Leads.'),
+      'description' => t("A HubSpot API POST URL, to submit a form's contents to HubSpot Leads."),
       'features' => array(
         'csv' => FALSE,
         'email' => FALSE,
@@ -192,7 +192,7 @@ function _webform_edit_hubspot_url($component) {
   $form['value'] = array(
     '#type' => 'textfield',
     '#title' => t('HubSpot POST URL'),
-    '#description' => t('The API POST URL provided under HubSpot\'s Lead API settings for this form.'),
+    '#description' => t("The API POST URL provided under HubSpot's Lead API settings for this form."),
     '#default_value' => $component['value'],
   );
 
@@ -267,7 +267,7 @@ function hubspot_page_build(&$page) {
 function hubspot_permission() {
   return array('see recent hubspot leads' => array(
            'title' => t('See recent HubSpot leads'),
-           'description' => t('View the recent leads block when it\'s enabled.'),
+           'description' => t("View the recent leads block when it's enabled."),
            'restrict access' => TRUE));
 }
 
@@ -362,7 +362,7 @@ function hubspot_help($path, $arg) {
       $output .= '<p>' . t('The HubSpot module provides leads integration with the HubSpot API, allowing forms created with the Webform module to submit their data to HubSpot for leads tracking. It also allows you to easily embed the HubSpot JavaScript tracking code in your site to track the visits of each lead. Further information is available in the Drupal <a href="http://drupal.org/node/1195370">handbook pages for this module.</a>') . '</p>';
 
       $output .= '<h3>' . t('Creating a HubSpot Webform') . '</h3>';
-      $output .= '<p>' . t('To have a Webform\'s data sent to HubSpot for leads tracking, complete the following steps:') . '</p>';
+      $output .= '<p>' . t("To have a Webform's data sent to HubSpot for leads tracking, complete the following steps:") . '</p>';
       $output .= '<ol>';
       $output .= '<li>' . t('Log in to your HubSpot account and visit the Settings page. Click the HubSpot Lead API link under Lead Management.') . '</li>';
       $output .= '<li>' . t('Press Add New Form and specify the form name, email list, and lead nurturing campaign as desired.') . '</li>';
@@ -379,17 +379,17 @@ function hubspot_help($path, $arg) {
       $output .= '<dt>' . t('FirstName, LastName, and FullName') . '</dt>';
       $output .= '<dd>' . t('Use FirstName or LastName to send those fields separately; send FullName for HubSpot to automatically split the name into first and last names.') . '</dd>';
       $output .= '<dt>' . t('Email, Phone, Fax, Website, and TwitterHandle') . '</dt>';
-      $output .= '<dd>' . t('Specify these field keys to get the user\'s contact information recognized by HubSpot.') . '</dd>';
+      $output .= '<dd>' . t("Specify these field keys to get the user's contact information recognized by HubSpot.") . '</dd>';
       $output .= '<dt>' . t('Company, NumberEmployees, AnnualRevenue, and JobTitle') . '</dt>';
-      $output .= '<dd>' . t('Capture the user\'s employment information.') . '</dd>';
+      $output .= '<dd>' . t("Capture the user's employment information.") . '</dd>';
       $output .= '<dt>' . t('Address, City, State, ZipCode, Country') . '</dt>';
-      $output .= '<dd>' . t('Capture the user\'s location.') . '</dd>';
+      $output .= '<dd>' . t("Capture the user's location.") . '</dd>';
       $output .= '<dt>' . t('Message') . '</dt>';
       $output .= '<dd>' . t('Allow the user to send a custom message.') . '</dd>';
       $output .= '</dl>';
       $output .= '<p>' . t('Specify these as the <strong>Field Key</strong> when adding components in your form. The field key is not shown to users filling out the form, but only used by HubSpot to display the data; the "Label" field specifies what your users will see.') . '</p>';
       $output .= '<p>' . t('Note that you may provide other custom fields with any field key you like, if you have other data you wish to collect. HubSpot will store all data sent to it and display it in the "Form Data" tab when viewing each lead.') . '</p>';
-      $output .= '<p>' . t('Also, if you\'re using HubSpot\'s Salesforce integration, you must use field keys that correspond to the field\'s API Name in Salesforce.') . '</p>';
+      $output .= '<p>' . t("Also, if you're using HubSpot's Salesforce integration, you must use field keys that correspond to the field's API Name in Salesforce.") . '</p>';
       
       $output .= '<h3>' . t('HubSpot Javascript tracking code') . '</h3>';
       $output .= '<p>' . t('HubSpot supports using a JavaScript tracking system to analyze potential leads on your site. You can get the JavaScript code from your HubSpot settings, under External Site Traffic Logging, and paste it into the HubSpot integration settings page in Drupal to have it automatically included on every page.') . '</p>';
