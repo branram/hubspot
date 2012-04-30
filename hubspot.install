@@ -4,6 +4,37 @@
  * Handle install/uninstall and warn users of problems with disabled Webform components.
  */
 
+ /**
+ * Implements hook_requirements() to check for presense of the haPiHP library.
+ */
+function hubspot_requirements($phase) {
+  $requirements = array();
+  
+  if (($phase == 'runtime') || ($phase == 'install')) {
+    // Ensure translations do not break at install time
+    $t = get_t();
+    
+    if (libraries_detect('haPiHP')) {
+      $requirements['haPiHP'] = array(
+        'title' => $t('Hubspot haPiHP Library'),
+        'value' => $t('Installed'),
+        'severity' => REQUIREMENT_OK,
+      );
+    } else {
+      $requirements['haPiHP'] = array(
+        'title' => $t('Hubspot haPiHP Library'),
+        'value' => $t('Not Installed'),
+        'severity' => REQUIREMENT_ERROR,
+        'description' => $t('Please install the Hubspot haPiHP library %url in the sites/all/libraries folder.', array('%url' => 'https://github.com/HubSpot/haPiHP')),
+      );
+    }
+  }
+  
+  return $requirements;
+}
+
+
+ 
 /**
  * Implements hook_install() to notify user of successful installation.
  */
@@ -32,3 +63,5 @@ function hubspot_uninstall() {
 function hubspot_disable() {
   drupal_set_message(st('With the HubSpot module disabled, you may experience errors viewing and editing your HubSpot-enabled forms. Delete the HubSpot POST URL field or uninstall this module entirely to clear the errors.'), 'warning');
 }
+
+

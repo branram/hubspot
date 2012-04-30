@@ -5,6 +5,28 @@
  */
 
 /**
+ * Implements hook_libraries_info().
+ */
+function hubspot_libraries_info() {
+  $libraries = array();
+
+  if (!libraries_detect('haPiHP')) {
+    $libraries['haPiHP'] = array(
+      'name' => 'Hubspot haPiHP Library',
+      'vendor url' => 'https://github.com/HubSpot/haPiHP',
+      'download url' => 'https://github.com/HubSpot/haPiHP/downloads',
+      'version arguments' => array(
+        'file' => 'class.settings.php',
+        'pattern' => '@\$API_VERSION = \'([a-zA-Z0-9.]+)\'@',
+        'lines' => 30,
+      ),
+    );
+  }
+
+  return $libraries;
+}
+ 
+/**
  * Implements hook_menu() to get the config page listed
  */
 function hubspot_menu() {
@@ -31,6 +53,8 @@ function hubspot_webform_submission_insert($node, $submission) {
   if ($submission->is_draft == 1)
     return;
   
+  dpm($submission);
+  dpm($node->webform);
   foreach ($submission->data as $cid => $data) {
     if ($node->webform['components'][$cid]['type'] == 'hubspot_url') {
       $hubSpotURL = $data['value'][0];
@@ -56,6 +80,7 @@ function hubspot_webform_submission_insert($node, $submission) {
       // These fields must be submitted with each request
       $values['UserToken'] = isset($_COOKIE['hubspotutk']) ? $_COOKIE['hubspotutk'] : '';
       $values['IPAddress'] = ip_address();
+      dpm($values);
     
       $r = hubspot_insert_lead($hubSpotURL, $values);
     

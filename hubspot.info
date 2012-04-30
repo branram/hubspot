@@ -1,6 +1,7 @@
 name = HubSpot Drupal integration
-description = "Provides HubSpot leads API integration with Drupal."
+description = "Provides HubSpot leads API integration with Drupal. Works with Hubspots OAuth implementation"
 core = 7.x
 dependencies[] = webform (3.x)
+dependencies[] = libraries (2.x)
 configure = admin/config/content/hubspot
 package = Webform

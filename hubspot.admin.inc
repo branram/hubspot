@@ -8,23 +8,23 @@
 function hubspot_admin_settings() {
   $form = array();
 
-  $form['hapi'] = array(
-    '#title' => t('HubSpot API Settings'),
+  $form['settings'] = array(
+    '#title' => t('HubSpot Settings'),
     '#type' => 'fieldset',
   );
 
-  $form['hapi']['hubspot_apikey'] = array(
-    '#title' => t('HubSpot API Key'),
+  $form['settings']['hubspot_portalid'] = array(
+    '#title' => t('HubSpot Portal ID'),
     '#type' => 'textfield',
-    '#default_value' => variable_get('hubspot_apikey', ''),
-    '#description' => t('This can be <a href="https://api.hubspot.com/keys/get">requested from HubSpot</a> and is required for the Latest Leads dashboard block to function. Inserting leads does not require an API key.'),
+    '#default_value' => variable_get('hubspot_portalid', ''),
+    '#description' => t('Enter the Hubspot Portal ID for this site.  It can be found by <a href="https://login.hubspot.com/login" target="_blank">logging into HubSpot</a> going to the Dashboard and examining the url. Example: "https://app.hubspot.com/dashboard-plus/12345/dash/".  The number after "dashboard-plus" is your Portal ID.'),
   );
   
-  $form['hapi']['hubspot_log_code'] = array(
-    '#title' => t('HubSpot Logging Code'),
+  $form['settings']['hubspot_log_code'] = array(
+    '#title' => t('HubSpot Traffic Logging Code'),
     '#type' => 'textarea',
     '#default_value' => variable_get('hubspot_log_code', ''),
-    '#description' => t('To enable HubSpot traffic logging on your site, paste the HubSpot JavaScript logging code here.'),
+    '#description' => t('To enable HubSpot traffic logging on your site, paste the External Site Traffic Logging code here.'),
   );
   
   $form['debug'] = array(
@@ -50,10 +50,14 @@ function hubspot_admin_settings() {
 }
 
 /**
- * Validation for hubspot_admin_settings form. Ensure that the debug email
- * address provided is valid if debugging is to be enabled.
+ * Validation for hubspot_admin_settings form. Ensure that the Portal ID is
+ * has been entered and the debug email address provided is valid if debugging
+ * is enabled.
  */
 function hubspot_admin_settings_validate($form, &$form_state) {
+  if ($form_state['values']['hubspot_portalid']) {
+    form_set_error('hubspot_portalid', t('You must provide a Hubspot Portal ID.'));
+  }
   if ($form_state['values']['hubspot_debug_on'] &&
       !valid_email_address($form_state['values']['hubspot_debug_email'])) {
     form_set_error('hubspot_debug_email', t('You must provide a valid email address.'));
