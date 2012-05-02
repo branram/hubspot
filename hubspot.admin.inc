@@ -8,6 +8,13 @@
 function hubspot_admin_settings() {
   $form = array();
 
+  $hubspot_error = $_GET['error'];
+    if ($hubspot_error == "access_denied") {
+    drupal_set_message(t('You denied the request for authentication with Hubspot. Please click the button again and choose the AUTHORIZE option.'),'error',FALSE);
+  }
+  dpm($form);
+  //dpm($form_state);
+
   $form['settings'] = array(
     '#title' => t('HubSpot Settings'),
     '#type' => 'fieldset',
@@ -20,6 +27,15 @@ function hubspot_admin_settings() {
     '#description' => t('Enter the Hubspot Portal ID for this site.  It can be found by <a href="https://login.hubspot.com/login" target="_blank">logging into HubSpot</a> going to the Dashboard and examining the url. Example: "https://app.hubspot.com/dashboard-plus/12345/dash/".  The number after "dashboard-plus" is your Portal ID.'),
   );
   
+  if (variable_get('hubspot_portalid', '')) {
+    $form['settings']['hubspot_authentication'] = array(
+      '#value' => t('Connect to Hubspot Account'),
+      '#type' => 'submit',
+      '#validate' => array(),
+      '#submit' => array('hubspot_oauth_submit'),
+    );
+  };
+
   $form['settings']['hubspot_log_code'] = array(
     '#title' => t('HubSpot Traffic Logging Code'),
     '#type' => 'textarea',
@@ -50,16 +66,29 @@ function hubspot_admin_settings() {
 }
 
 /**
- * Validation for hubspot_admin_settings form. Ensure that the Portal ID is
+ * Validation for hubspot_admin_settings form. Ensure that the Portal ID
  * has been entered and the debug email address provided is valid if debugging
  * is enabled.
  */
 function hubspot_admin_settings_validate($form, &$form_state) {
-  if ($form_state['values']['hubspot_portalid']) {
+  if (empty($form_state['values']['hubspot_portalid'])) {
     form_set_error('hubspot_portalid', t('You must provide a Hubspot Portal ID.'));
   }
   if ($form_state['values']['hubspot_debug_on'] &&
       !valid_email_address($form_state['values']['hubspot_debug_email'])) {
     form_set_error('hubspot_debug_email', t('You must provide a valid email address.'));
   }
+
+}
+
+function hubspot_oauth_submit($form, &$form_state) {
+  global $base_root;
+  $data = 'client_id=' . HUBSPOT_CLIENT_ID .
+    '&portalId=' . $form_state['values']['hubspot_portalid'] .
+    '&redirect_uri=' . $base_root . '/admin/config/content/hubspot' .
+    '&scope=' . 'leads-rw+offline';
+  //watchdog('hubspot',$data);
+  //dpm($form_state);
+  $form_state['redirect'][] = 'https://app.hubspot.com/auth/authenticate?'. $data;
+  
 }

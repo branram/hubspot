@@ -3,37 +3,6 @@
  * @file
  * Handle install/uninstall and warn users of problems with disabled Webform components.
  */
-
- /**
- * Implements hook_requirements() to check for presense of the haPiHP library.
- */
-function hubspot_requirements($phase) {
-  $requirements = array();
-  
-  if (($phase == 'runtime') || ($phase == 'install')) {
-    // Ensure translations do not break at install time
-    $t = get_t();
-    
-    if (libraries_detect('haPiHP')) {
-      $requirements['haPiHP'] = array(
-        'title' => $t('Hubspot haPiHP Library'),
-        'value' => $t('Installed'),
-        'severity' => REQUIREMENT_OK,
-      );
-    } else {
-      $requirements['haPiHP'] = array(
-        'title' => $t('Hubspot haPiHP Library'),
-        'value' => $t('Not Installed'),
-        'severity' => REQUIREMENT_ERROR,
-        'description' => $t('Please install the Hubspot haPiHP library %url in the sites/all/libraries folder.', array('%url' => 'https://github.com/HubSpot/haPiHP')),
-      );
-    }
-  }
-  
-  return $requirements;
-}
-
-
  
 /**
  * Implements hook_install() to notify user of successful installation.
@@ -41,6 +10,36 @@ function hubspot_requirements($phase) {
 function hubspot_install() {
   drupal_set_message(st('The HubSpot module has been successfully installed. Configure it in the !link.',
                         array('!link' => l('HubSpot integration settings', 'admin/config/content/hubspot'))), 'status');
+}
+
+/**
+ * Implements hook_requirements().
+ */
+function hubspot_requirements($phase) {
+  $requirements = array();
+  
+  if ($phase == 'runtime') {
+    // Ensure translations do not break at install time
+    $t = get_t();
+    $status = libraries_detect('haPiHP');
+    dpm($status);
+    if ($status['installed']) {
+      $requirements['haPiHP'] = array(
+        'title' => 'Hubspot haPiHP Library',
+        'value' => $t('Library Found.'),
+        'severity' => REQUIREMENT_OK,
+      );
+    } else {
+      $requirements['haPiHP'] = array(
+        'title' => $t('Hubspot haPiHP Library'),
+        'value' => '',
+        'severity' => REQUIREMENT_ERROR,
+        'description' => $t('Please install the Hubspot haPiHP library %url in the sites/all/libraries folder.', array('%url' => 'https://github.com/HubSpot/haPiHP/downloads')),
+      );
+    }
+  }
+  
+  return $requirements;
 }
 
 /**

@@ -3,25 +3,29 @@
  * @file
  * Sends Webform results to HubSpot's Leads API by using Webform's provided hooks.
  */
-
+ 
+ define('HUBSPOT_SLUG','drupal');
+ define('HUBSPOT_SECRET','4ee61a38-82d6-4a51-a165-e70814b5b291');
+ define('HUBSPOT_CLIENT_ID','4fde30cf-9300-11e1-8815-ebbb07e120d1');
+ define('HUBSPOT_APP_PAGE','https://app.hubspot.com/market/front/drupal');
+ define('HUBSPOT_GUID','1c23b3b4-f8fa-4762-ade2-cad5ea76909e');
+ 
 /**
  * Implements hook_libraries_info().
  */
 function hubspot_libraries_info() {
-  $libraries = array();
 
-  if (!libraries_detect('haPiHP')) {
-    $libraries['haPiHP'] = array(
-      'name' => 'Hubspot haPiHP Library',
-      'vendor url' => 'https://github.com/HubSpot/haPiHP',
-      'download url' => 'https://github.com/HubSpot/haPiHP/downloads',
-      'version arguments' => array(
-        'file' => 'class.settings.php',
-        'pattern' => '@\$API_VERSION = \'([a-zA-Z0-9.]+)\'@',
-        'lines' => 30,
+  $libraries['haPiHP'] = array(
+    'name' => 'Hubspot haPiHP Library',
+    'vendor url' => 'https://github.com/HubSpot/haPiHP',
+    'download url' => 'https://github.com/HubSpot/haPiHP/downloads',
+    'version' => 'v1',
+    'files' => array(
+      'php' => array(
+        'class.baseclient.php',
       ),
-    );
-  }
+    ),
+  );
 
   return $libraries;
 }
@@ -45,6 +49,7 @@ function hubspot_menu() {
   return $items;
 }
 
+ 
 /**
  * Intercepts the WebForm submission and send it off to HubSpot. Implements
  * hook_webform_submission_insert().
