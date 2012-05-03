@@ -49,6 +49,32 @@ function hubspot_menu() {
   return $items;
 }
 
+/**
+ * Refreshes Hubspot OAuth Access Token when expired.
+ */
+function hubspot_oauth_refresh() {
+  $data = array(
+    'refresh_token' => variable_get('hubspot_refresh_token'),
+    'client_id' => HUBSPOT_CLIENT_ID,
+    'grant_type' => 'refresh_token',
+  );
+
+  $data = drupal_http_build_query($data);
+  dpm($data);
+    
+  $options = array(
+    'headers' => array(
+      'Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8'
+    ),
+    'method' => 'POST',
+    'data' => $data,    
+  );
+  
+  $return = drupal_http_request('https://api.hubapi.com/auth/v1/refresh', $options );
+  /** TODO: Save the new Access Token **/
+  dpm($return);
+}
+
  
 /**
  * Intercepts the WebForm submission and send it off to HubSpot. Implements
@@ -58,8 +84,6 @@ function hubspot_webform_submission_insert($node, $submission) {
   if ($submission->is_draft == 1)
     return;
   
-  dpm($submission);
-  dpm($node->webform);
   foreach ($submission->data as $cid => $data) {
     if ($node->webform['components'][$cid]['type'] == 'hubspot_url') {
       $hubSpotURL = $data['value'][0];
