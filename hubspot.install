@@ -18,7 +18,6 @@ function hubspot_install() {
 function hubspot_uninstall() {
   variable_del('hubspot_debug_on');
   variable_del('hubspot_debug_email');
-  variable_del('hubspot_apikey');
   variable_del('hubspot_log_code');
   variable_del('hubspot_access_token');
   variable_del('hubspot_refresh_token');
