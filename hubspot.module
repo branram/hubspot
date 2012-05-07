@@ -114,12 +114,6 @@ function hubspot_webform_submission_insert($node, $submission) {
       dpm($values);
     
       $r = hubspot_insert_lead($hubSpotURL, $values);
-      if ($r['HTTPCode'] == '401') {
-        $refresh = hubspot_oauth_refresh();
-        if ($refresh) {
-          $r = hubspot_insert_lead($hubSpotURL, $values);
-        }
-      }
     
       if (empty($r['Error']) && strpos($r['Data'], 'successfully') !== FALSE) {
         watchdog('hubspot', 'Webform "%form" results succesfully submitted to HubSpot. Response: @msg',
@@ -400,14 +394,21 @@ function hubspot_block_view($delta = '') {
  * @param int $n Number of leads to fetch
  */
 function hubspot_get_recent($n = 5) {
-  $hapiKey = variable_get('hubspot_apikey', '');
+  $access_token = variable_get('hubspot_access_token', '');
   $n = intval($n);
   
-  if (empty($hapiKey)) {
-    return array('Error' => t('No HubSpot API key specified.'));
+  if (empty($access_token)) {
+    return array('Error' => t('This site is not connected to a Hubspot Account.'));
   }
   
-  $r = drupal_http_request("https://hubapi.com/leads/v1/list/?hapikey={$hapiKey}&sort=insertedAt&dir=desc&max={$n}");
+  $r = drupal_http_request("https://api.hubapi.com/leads/v1/list/?access_token={$access_token}&sort=insertedAt&dir=desc&max={$n}");
+  if ($r['HTTPCode'] == '401') {
+        $refresh = hubspot_oauth_refresh();
+        if ($refresh) {
+          $access_token = variable_get('hubspot_access_token', '');
+          $r = drupal_http_request("https://api.hubapi.com/leads/v1/list/?access_token={$access_token}&sort=insertedAt&dir=desc&max={$n}");
+        }
+      }
 
   return array('Data' => json_decode($r->data), 'Error' => isset($r->error) ? $r->error : '',
                'HTTPCode' => $r->code);
