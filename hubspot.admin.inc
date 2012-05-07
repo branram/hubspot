@@ -22,9 +22,6 @@ function hubspot_admin_settings() {
   if ($hubspot_error == "access_denied") {
     drupal_set_message(t('You denied the request for authentication with Hubspot. Please click the button again and choose the AUTHORIZE option.'),'error',FALSE);
   }
-  
-  //dpm($form);
-  //dpm($form_state);
 
   $form['settings'] = array(
     '#title' => t('HubSpot Settings'),
@@ -53,15 +50,6 @@ function hubspot_admin_settings() {
     }
   }
   
-  /** For Development Only **/
-  $form['settings']['hubspot_refresh'] = array(
-      '#value' => t('Refresh Token'),
-      '#type' => 'submit',
-      '#validate' => array(),
-      '#submit' => array('hubspot_oauth_refresh'),
-    );
- 
-
   $form['settings']['hubspot_log_code'] = array(
     '#title' => t('HubSpot Traffic Logging Code'),
     '#type' => 'textarea',
@@ -111,36 +99,9 @@ function hubspot_oauth_submit($form, &$form_state) {
   global $base_root;
   $data = 'client_id=' . HUBSPOT_CLIENT_ID .
     '&portalId=' . $form_state['values']['hubspot_portalid'] .
-    '&redirect_uri=' . $base_root . '/admin/config/content/hubspot' .
+    '&redirect_uri=' . $base_root . '/admin/config/services/hubspot' .
     '&scope=' . 'leads-rw+offline';
-  //watchdog('hubspot',$data);
-  //dpm($form_state);
+
   $form_state['redirect'][] = 'https://app.hubspot.com/auth/authenticate?'. $data;
   
 }
-
-/**
- * Refreshes Hubspot OAuth Access Token when expired.
- 
-function hubspot_oauth_refresh() {
-  $data = array(
-    'refresh_token' => variable_get($hubspot_refresh_token),
-    'client_id' => HUBSPOT_CLIENT_ID,
-    'grant_type' => 'refresh_token',
-  );
-
-  $data = drupal_http_build_query($data);
-  dpm($data);
-    
-  $options = array(
-    'headers' => array(
-      'Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8'
-    ),
-    'method' => 'POST',
-    'data' => $data,    
-  );
-  
-  $return = drupal_http_request('https://api.hubapi.com/auth/v1/refresh', $options );
-
-  dpm($return);
-}*/

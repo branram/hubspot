@@ -11,32 +11,12 @@
  define('HUBSPOT_GUID','1c23b3b4-f8fa-4762-ade2-cad5ea76909e');
  
 /**
- * Implements hook_libraries_info().
- */
-function hubspot_libraries_info() {
-
-  $libraries['haPiHP'] = array(
-    'name' => 'Hubspot haPiHP Library',
-    'vendor url' => 'https://github.com/HubSpot/haPiHP',
-    'download url' => 'https://github.com/HubSpot/haPiHP/downloads',
-    'version' => 'v1',
-    'files' => array(
-      'php' => array(
-        'class.baseclient.php',
-      ),
-    ),
-  );
-
-  return $libraries;
-}
- 
-/**
  * Implements hook_menu() to get the config page listed
  */
 function hubspot_menu() {
   $items = array();
 
-  $items['admin/config/content/hubspot'] = array(
+  $items['admin/config/services/hubspot'] = array(
     'title' => 'HubSpot integration settings',
     'description' => 'Set up HubSpot integration and leads insertion.',
     'page callback' => 'drupal_get_form',
@@ -71,8 +51,30 @@ function hubspot_oauth_refresh() {
   );
   
   $return = drupal_http_request('https://api.hubapi.com/auth/v1/refresh', $options );
-  /** TODO: Save the new Access Token **/
-  dpm($return);
+  
+  if ($return->code == '200') {
+    $return_data = json_decode($return->data, true);
+    dpm($return_data);
+    
+    $hubspot_access_token = $return_data['access_token'];
+    variable_set('hubspot_access_token', $hubspot_access_token);
+    
+    $hubspot_refresh_token = $return_data['refresh_token'];
+    variable_set('hubspot_refresh_token', $hubspot_refresh_token);
+    
+    $hubspot_expires_in = $return_data['expires_in'];
+    variable_set('hubspot_expires_in', $hubspot_expires_in);
+    
+    return TRUE;
+    
+  } else {
+    drupal_set_message(t('Refresh token failed with Error Code "%code: %status_message". Reconnect to your Hubspot account.'),'error',FALSE);
+    watchdog('hubspot', 'Refresh token failed with Error Code "%code: %status_message". Visit the Hubspot module settings page and reconnect to your Hubspot account.',
+                 array('%code' => $return->code, '%status_message' => $return->status_message), WATCHDOG_INFO);
+    return FALSE; 
+                
+  }
+
 }
 
  
@@ -112,6 +114,12 @@ function hubspot_webform_submission_insert($node, $submission) {
       dpm($values);
     
       $r = hubspot_insert_lead($hubSpotURL, $values);
+      if ($r['HTTPCode'] == '401') {
+        $refresh = hubspot_oauth_refresh();
+        if ($refresh) {
+          $r = hubspot_insert_lead($hubSpotURL, $values);
+        }
+      }
     
       if (empty($r['Error']) && strpos($r['Data'], 'successfully') !== FALSE) {
         watchdog('hubspot', 'Webform "%form" results succesfully submitted to HubSpot. Response: @msg',

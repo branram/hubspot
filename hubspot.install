@@ -13,36 +13,6 @@ function hubspot_install() {
 }
 
 /**
- * Implements hook_requirements().
- */
-function hubspot_requirements($phase) {
-  $requirements = array();
-  
-  if ($phase == 'runtime') {
-    // Ensure translations do not break at install time
-    $t = get_t();
-    $status = libraries_detect('haPiHP');
-    dpm($status);
-    if ($status['installed']) {
-      $requirements['haPiHP'] = array(
-        'title' => 'Hubspot haPiHP Library',
-        'value' => $t('Library Found.'),
-        'severity' => REQUIREMENT_OK,
-      );
-    } else {
-      $requirements['haPiHP'] = array(
-        'title' => $t('Hubspot haPiHP Library'),
-        'value' => '',
-        'severity' => REQUIREMENT_ERROR,
-        'description' => $t('Please install the Hubspot haPiHP library %url in the sites/all/libraries folder.', array('%url' => 'https://github.com/HubSpot/haPiHP/downloads')),
-      );
-    }
-  }
-  
-  return $requirements;
-}
-
-/**
  * Implements hook_uninstall() to remove our saved variables and all traces of the hubspot_url component
  */
 function hubspot_uninstall() {
