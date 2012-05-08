@@ -5,7 +5,6 @@
  */
  
  define('HUBSPOT_SLUG','drupal');
- define('HUBSPOT_SECRET','4ee61a38-82d6-4a51-a165-e70814b5b291');
  define('HUBSPOT_CLIENT_ID','4fde30cf-9300-11e1-8815-ebbb07e120d1');
  define('HUBSPOT_APP_PAGE','https://app.hubspot.com/market/front/drupal');
  define('HUBSPOT_GUID','1c23b3b4-f8fa-4762-ade2-cad5ea76909e');
@@ -16,7 +15,7 @@
 function hubspot_menu() {
   $items = array();
 
-  $items['admin/config/services/hubspot'] = array(
+  $items['admin/settings/hubspot'] = array(
     'title' => 'HubSpot integration settings',
     'description' => 'Set up HubSpot integration and leads insertion.',
     'page callback' => 'drupal_get_form',
@@ -111,7 +110,6 @@ function hubspot_webform_submission_insert($node, $submission) {
       // These fields must be submitted with each request
       $values['UserToken'] = isset($_COOKIE['hubspotutk']) ? $_COOKIE['hubspotutk'] : '';
       $values['IPAddress'] = ip_address();
-      dpm($values);
     
       $r = hubspot_insert_lead($hubSpotURL, $values);
     
@@ -193,10 +191,8 @@ function hubspot_insert_lead($formURL, $fields) {
   
   // send POST data
   
-  $r = drupal_http_request($formURL,
-                           array('headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
-                                 'method' => 'POST',
-                                 'data' => $strPost));
+  $r = drupal_http_request($formURL, array('Content-Type' => 'application/x-www-form-urlencoded'),
+                           'POST', $strPost);
   
   return array('Data' => isset($r->data) ? $r->data : '',
                'Error' => isset($r->error) ? $r->error : '',
@@ -307,83 +303,86 @@ function _webform_display_hubspot_url($component, $value, $format = 'html') {
 }
 
 /**
- * Implements hook_page_build() to inject the HubSpot JavaScript tracking code into
+ * Implements hook_footer() to inject the HubSpot JavaScript tracking code into
  * the page footer, just before </body>.
  */
-function hubspot_page_build(&$page) {
-  $page['page_bottom']['hubspot_code'] = array(
-    '#type' => 'markup',
-    '#markup' => variable_get('hubspot_log_code', ''),
-  );
+function hubspot_footer($main = 0) {
+
+
+  return variable_get('hubspot_log_code', '');
+
 }
 
 /**
- * Implements hook_permission() to choose who gets to see the recent leads block
+ * Implements hook_perm() to decide who gets access to the recent leads block
  */
-function hubspot_permission() {
-  return array('see recent hubspot leads' => array(
-           'title' => t('See recent HubSpot leads'),
-           'description' => t("View the recent leads block when it's enabled."),
-           'restrict access' => TRUE));
+function hubspot_perm() {
+  return array('see recent hubspot leads');
+
+
+
 }
 
-/**
- * Implements hook_block_info() to provide a HubSpot recent leads block.
- */
-function hubspot_block_info() {
-  $blocks = array();
-  
-  $blocks['hubspot_recent'] = array(
-    'info' => t('HubSpot Recent Leads'),
-    'properties' => array('administrative' => TRUE),
-  );
-  
-  return $blocks;
-}
 
 /**
- * Implements hook_block_view() to provide a HubSpot recent leads block.
+ * Implements hook_block() to provide a HubSpot recent leads block.
  */
-function hubspot_block_view($delta = '') {
-  $block = array();
+function hubspot_block($op = 'list', $delta = 0, $edit = array()) {
+  switch ($op) {
+    case 'list':
+
+      $blocks = array();
   
-  switch ($delta) {
-    case 'hubspot_recent':
-      if (!user_access('see recent hubspot leads')) {
-        return;
-      }
-      $block['subject'] = t('HubSpot Recent Leads');
-      
-      $leads = hubspot_get_recent();
-      
-      // This part of the HubSpot API returns HTTP error codes on failure, with no message
-      if (!empty($leads['Error']) || $leads['HTTPCode'] != 200) {
-        $block['content'] = t('An error occurred when fetching the HubSpot leads data: @error',
-                              array('@error' => !empty($leads['Error']) ? $leads['Error'] :
-                                    $leads['HTTPCode']));
-        return $block;
-      }
-      elseif (empty($leads['Data'])) {
-        $block['content'] = t('No leads to show.');
-        return $block;
-      }
-      
-      $block['content'] = array(
-        '#theme' => 'item_list',
-        '#items' => array(),
-        '#type' => 'ul',
+      $blocks[0] = array(
+        'info' => t('HubSpot Recent Leads'),
+        'status' => 0,
       );
-      
-      foreach($leads['Data'] as $lead) {
-        // Note that $lead->insertedAt comes in milliseconds, not seconds, since the epoch
-        $block['content']['#items'][] = l($lead->firstName . ' ' . $lead->lastName, $lead->leadLink) . ' ' .
-                                        t('(@time ago)', array('@time' => format_interval(time() - intval($lead->insertedAt / 1000))));
-      }
-      
-      break;
-  }
   
-  return $block;
+      return $blocks;
+      break;
+    
+    case 'view':
+
+      if ($delta == 0 && user_access('see recent hubspot leads')) {
+        $block = array();
+
+
+        $block['subject'] = t('HubSpot Recent Leads');
+      
+        $leads = hubspot_get_recent();
+        
+
+        // This part of the HubSpot API returns HTTP error codes on failure, with no message
+        if (!empty($leads['Error']) || $leads['HTTPCode'] != 200) {
+          $block['content'] = t('An error occurred when fetching the HubSpot leads data: @error',
+                                array('@error' => !empty($leads['Error']) ? $leads['Error'] :
+                                      $leads['HTTPCode']));
+          return $block;
+        }
+        elseif (empty($leads['Data'])) {
+          $block['content'] = t('No leads to show.');
+          return $block;
+        }
+        
+        $items = array();
+        foreach($leads['Data'] as $lead) {
+          // Note that $lead->insertedAt comes in milliseconds, not seconds, since the epoch
+          $items[] = l($lead->firstName . ' ' . $lead->lastName, $lead->leadLink) . ' ' .
+                     t('(@time ago)',
+                       array('@time' => format_interval(time() - intval($lead->insertedAt / 1000))));
+        }
+        
+        $block['content'] = theme('item_list', $items);
+        return $block;
+      }
+
+      break;
+    
+    default: // ignore 'configure' and 'save'
+    break;
+  }
+
+
 }
 
 /**

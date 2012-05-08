@@ -46,7 +46,6 @@ function hubspot_admin_settings() {
     if (variable_get('hubspot_refresh_token','')) {
       $form['settings']['hubspot_authentication']['#suffix'] = t('Your Hubspot account is connected.');
       $form['settings']['hubspot_authentication']['#value'] = t('Disconnect Hubspot Account');
-      /** TODO: Implement Disconnection Code **/
       $form['settings']['hubspot_authentication']['#submit'] = array('hubspot_oauth_disconnect');
     }
   }
@@ -100,7 +99,7 @@ function hubspot_oauth_submit($form, &$form_state) {
   global $base_root;
   $data = 'client_id=' . HUBSPOT_CLIENT_ID .
     '&portalId=' . $form_state['values']['hubspot_portalid'] .
-    '&redirect_uri=' . $base_root . '/admin/config/services/hubspot' .
+    '&redirect_uri=' . $base_root . '/admin/settings/hubspot' .
     '&scope=' . 'leads-rw+offline';
     
   $form_state['redirect'][] = 'https://app.hubspot.com/auth/authenticate?'. $data;
