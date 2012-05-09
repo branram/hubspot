@@ -39,7 +39,6 @@ function hubspot_oauth_refresh() {
   );
 
   $data = drupal_http_build_query($data);
-  dpm($data);
     
   $options = array(
     'headers' => array(
@@ -53,7 +52,6 @@ function hubspot_oauth_refresh() {
   
   if ($return->code == '200') {
     $return_data = json_decode($return->data, true);
-    dpm($return_data);
     
     $hubspot_access_token = $return_data['access_token'];
     variable_set('hubspot_access_token', $hubspot_access_token);
@@ -110,7 +108,6 @@ function hubspot_webform_submission_insert($node, $submission) {
       // These fields must be submitted with each request
       $values['UserToken'] = isset($_COOKIE['hubspotutk']) ? $_COOKIE['hubspotutk'] : '';
       $values['IPAddress'] = ip_address();
-      dpm($values);
     
       $r = hubspot_insert_lead($hubSpotURL, $values);
     
