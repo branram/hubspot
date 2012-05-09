@@ -4,10 +4,10 @@
  * Sends Webform results to HubSpot's Leads API by using Webform's provided hooks.
  */
  
- define('HUBSPOT_SLUG','drupal');
- define('HUBSPOT_CLIENT_ID','4fde30cf-9300-11e1-8815-ebbb07e120d1');
- define('HUBSPOT_APP_PAGE','https://app.hubspot.com/market/front/drupal');
- define('HUBSPOT_GUID','1c23b3b4-f8fa-4762-ade2-cad5ea76909e');
+ define('HUBSPOT_SLUG','hubspot-drupal');
+ define('HUBSPOT_CLIENT_ID','734f89bf-1b88-11e1-829a-3b413536dd4c');
+ define('HUBSPOT_APP_PAGE','https://app.hubspot.com/market/front/hubspot-drupal');
+ define('HUBSPOT_GUID','b147161c-4e34-4d90-bb95-e4594dcb98fb');
  
 /**
  * Implements hook_menu() to get the config page listed
@@ -39,7 +39,6 @@ function hubspot_oauth_refresh() {
   );
 
   $data = drupal_http_build_query($data);
-  dpm($data);
     
   $options = array(
     'headers' => array(
@@ -53,7 +52,6 @@ function hubspot_oauth_refresh() {
   
   if ($return->code == '200') {
     $return_data = json_decode($return->data, true);
-    dpm($return_data);
     
     $hubspot_access_token = $return_data['access_token'];
     variable_set('hubspot_access_token', $hubspot_access_token);
