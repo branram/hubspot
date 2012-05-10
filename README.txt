@@ -9,13 +9,17 @@ Installation
 
 Upload and install the Webform module before this module. Install this module
 as usual, then head to the HubSpot integration settings under Configuration
-(admin/config/content/hubspot). Enter your HubSpot API key and the JavaScript
-tracking code. The API key is required if you want to use the "latest leads"
-dashboard block, but is not required for submitting leads from Webform.
+(admin/config/services/hubspot). Enter your HubSpot Portal ID and the JavaScript
+tracking code. The Portal ID and Connecting to Hubspot is required if you want 
+to use the "latest leads" dashboard block, but is not required for submitting 
+leads from Webform.
 
-You can request an API key from HubSpot through their website:
+You can find your Portal ID by logging into HupSpot, going to the Dashboard and
+examining the url. The number located between "dashboard-plus" and "dash" is the
+Portal ID.
 
-https://api.hubspot.com/keys/get
+Example: https://app.hubspot.com/dashboard-plus/12345/dash/
+Portal ID: 12345
 
 The JavaScript tracking code can be found on the HubSpot Settings page, under
 External Site Traffic Logging. Copy and paste it directly into the
@@ -43,9 +47,6 @@ Extended documentation, with instructions on using HubSpot's Salesforce
 integration and details on automated receipt emails, is available in the Drupal
 handbook pages:
   http://drupal.org/node/1195370
-
-HubSpot API documentation is available at:
-  http://docs.hubapi.com/wiki/Main_Page
 
 Sponsorship
 -----------
