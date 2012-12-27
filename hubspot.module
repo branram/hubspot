@@ -25,6 +25,15 @@ function hubspot_menu() {
     'file' => 'hubspot.admin.inc',
   );
 
+  $items['hubspot/oauth'] = array(
+    'title' => 'HubSpot OAuth redirect',
+    'description' => 'Collects OAuth tokens.',
+    'page callback' => 'hubspot_oauth_connect',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+    'file' => 'hubspot.admin.inc',
+  );
+
   return $items;
 }
 

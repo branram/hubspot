@@ -8,21 +8,6 @@
 function hubspot_admin_settings() {
   $form = array();
 
-  $hubspot_access_token = $_GET['access_token'];
-  if (!empty($hubspot_access_token)) variable_set('hubspot_access_token', $hubspot_access_token);
-  
-  $hubspot_refresh_token = $_GET['refresh_token'];
-  if (!empty($hubspot_refresh_token)) variable_set('hubspot_refresh_token', $hubspot_refresh_token);
-  
-  $hubspot_expires_in = $_GET['expires_in'];
-  if (!empty($hubspot_expires_in)) variable_set('hubspot_expires_in', $hubspot_expires_in);
-  
-  $hubspot_error = $_GET['error'];
-  
-  if ($hubspot_error == "access_denied") {
-    drupal_set_message(t('You denied the request for authentication with Hubspot. Please click the button again and choose the AUTHORIZE option.'),'error',FALSE);
-  }
-
   $form['settings'] = array(
     '#title' => t('HubSpot Settings'),
     '#type' => 'fieldset',
@@ -46,7 +31,6 @@ function hubspot_admin_settings() {
     if (variable_get('hubspot_refresh_token','')) {
       $form['settings']['hubspot_authentication']['#suffix'] = t('Your Hubspot account is connected.');
       $form['settings']['hubspot_authentication']['#value'] = t('Disconnect Hubspot Account');
-      /** TODO: Implement Disconnection Code **/
       $form['settings']['hubspot_authentication']['#submit'] = array('hubspot_oauth_disconnect');
     }
   }
@@ -97,19 +81,43 @@ function hubspot_admin_settings_validate($form, &$form_state) {
 }
 
 function hubspot_oauth_submit($form, &$form_state) {
-  global $base_root;
-  $data = 'client_id=' . HUBSPOT_CLIENT_ID .
-    '&portalId=' . $form_state['values']['hubspot_portalid'] .
-    '&redirect_uri=' . $base_root . '/admin/config/services/hubspot' .
-    '&scope=' . 'leads-rw+offline';
-    
-  $form_state['redirect'][] = 'https://app.hubspot.com/auth/authenticate?'. $data;
-  
+  $data = array(
+    'client_id' => HUBSPOT_CLIENT_ID,
+    'portalId' => $form_state['values']['hubspot_portalid'],
+    'redirect_uri' => url('hubspot/oauth', array('query' => drupal_get_destination(), 'absolute' => TRUE)),
+    'scope' => 'leads-rw offline',
+  );
+  $form_state['redirect'][] = url('https://app.hubspot.com/auth/authenticate', array('query' => $data));
 }
 
+/**
+ * Page callback.
+ *
+ * Saves OAuth tokens from HubSpot and redirects user.
+ */
+function hubspot_oauth_connect() {
+  if (!empty($_GET['access_token']) && !empty($_GET['refresh_token']) && !empty($_GET['expires_in'])) {
+    drupal_set_message(t('Successfully authenticated with Hubspot.'), 'status', FALSE);
+
+    variable_set('hubspot_access_token', $_GET['access_token']);
+    variable_set('hubspot_refresh_token', $_GET['refresh_token']);
+    variable_set('hubspot_expires_in', $_GET['expires_in']);
+  }
+
+  if (!empty($_GET['error']) && $_GET['error'] == "access_denied") {
+    drupal_set_message(t('You denied the request for authentication with Hubspot. Please click the button again and choose the AUTHORIZE option.'),'error',FALSE);
+  }
+
+  drupal_goto();
+}
+
+/**
+ * Form submit handler.
+ *
+ * Deletes Hubspot OAuth tokens.
+ */
 function hubspot_oauth_disconnect($form, &$form_state) {
     variable_del('hubspot_access_token');
     variable_del('hubspot_refresh_token');
     variable_del('hubspot_expires_in');
-  
 }
