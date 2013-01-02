@@ -10,9 +10,7 @@ Installation
 Upload and install the Webform module before this module. Install this module
 as usual, then head to the HubSpot integration settings under Configuration
 (admin/config/services/hubspot). Enter your HubSpot Portal ID and the JavaScript
-tracking code. The Portal ID and Connecting to Hubspot is required if you want 
-to use the "latest leads" dashboard block, but is not required for submitting 
-leads from Webform.
+tracking code.
 
 You can find your Portal ID by logging into HupSpot, going to the Dashboard and
 examining the url. The number located between "dashboard-plus" and "dash" is the
@@ -28,13 +26,6 @@ configuration page and it will automatically be inserted into your site.
 If Webform submissions don't seem to be working, check the Drupal error log or
 enable the debugging system in this module's configuration page. Any HubSpot
 errors will then be emailed to you directly so you can diagnose the issue.
-
-If you need to uninstall the module, disable it and uninstall it completely
-through the Uninstall tab. When the module is disabled, the Webform module
-won't know how to handle the HubSpot POST URL field and may throw some errors;
-when you uninstall this module completely, it will automatically remove the
-POST URL field to prevent any issues. Alternately, you can manually remove
-the POST URL field from each affected Webform.
 
 Further Information
 -------------------
@@ -54,4 +45,5 @@ Sponsorship
 This project is sponsored by Digett, a Drupal-friendly San Antonio web design
 company with a focus on inbound marketing. Need additional features or custom
 styling? Contact us.
-  http://www.digett.com/
+
+http://www.digett.com/

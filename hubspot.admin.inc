@@ -2,15 +2,21 @@
 /**
  * @file
  * Provides admin settings page to adjust HubSpot API key, debugging settings,
- * and JavaScript embedding.
+ * JavaScript embedding, and form submission settings.
  */
 
 function hubspot_admin_settings() {
   $form = array();
 
+  $form['additional_settings'] = array(
+    '#type' => 'vertical_tabs',
+  );
+
   $form['settings'] = array(
-    '#title' => t('HubSpot Settings'),
+    '#title' => t('Connectivity'),
     '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#group' => 'additional_settings',
   );
 
   $form['settings']['hubspot_portalid'] = array(
@@ -44,8 +50,10 @@ function hubspot_admin_settings() {
   );
   
   $form['debug'] = array(
-    '#title' => t('HubSpot Debugging Settings'),
+    '#title' => t('Debugging'),
     '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#group' => 'additional_settings',
   );
   
   $form['debug']['hubspot_debug_on'] = array(
@@ -61,14 +69,130 @@ function hubspot_admin_settings() {
     '#default_value' => variable_get('hubspot_debug_email', variable_get('site_mail', '')),
     '#description' => t('Email error reports to this address if debugging is enabled.'),
   );
-  
-  return system_settings_form($form);
+
+  $form['webforms'] = array(
+    '#title' => t('Webforms'),
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#group' => 'additional_settings',
+    '#description' => 'The following webforms have been detected and can be configured to submit to the HubSpot API.',
+    '#tree' => TRUE,
+  );
+
+  $webform_nodes = variable_get('webform_node_types', array('webform'));
+  $nodes = array();
+
+  $hubspot_forms = _hubspot_get_forms();
+
+  if (isset($hubspot_forms['error'])) {
+    $form['webforms']['#description'] = $hubspot_forms['error'];
+  }
+  else {
+    if (empty($hubspot_forms['value'])) {
+      $form['webforms']['#description'] = t('No HubSpot forms found. You will need to create a form on HubSpot before you can configure it here.');
+    }
+    else {
+      $hubspot_form_options = array("--donotmap--" => "Do Not Map");
+      $hubspot_field_options = array();
+      foreach ($hubspot_forms['value'] as $hubspot_form) {
+        $hubspot_form_options[$hubspot_form['guid']] = $hubspot_form['name'];
+        $hubspot_field_options[$hubspot_form['guid']]['fields']['--donotmap--'] = "Do Not Map";
+        foreach ($hubspot_form['fields'] as $hubspot_field) {
+          $hubspot_field_options[$hubspot_form['guid']]['fields'][$hubspot_field['name']] = $hubspot_field['label'];
+        }
+      }
+
+      foreach ($webform_nodes as $node_type) {
+        $query = new EntityFieldQuery();
+
+        $query->entityCondition('entity_type', 'node')
+          ->entityCondition('bundle', $node_type)
+          ->propertyCondition('status', 1);
+
+        $result = $query->execute();
+
+        if (isset($result['node'])) {
+          $node_ids = array_keys($result['node']);
+          $nodes = array_merge($nodes, entity_load('node', $node_ids));
+        }
+      }
+
+      foreach ($nodes as $node) {
+        $nid = $node->nid;
+        $form['webforms']['nid-' . $nid] = array(
+          '#title' => $node->title,
+          '#type' => 'fieldset',
+        );
+
+        $form['webforms']['nid-' . $nid]['hubspot_form'] = array(
+          '#title' => t('HubSpot form'),
+          '#type' => 'select',
+          '#options' => $hubspot_form_options,
+          '#default_value' => _hubspot_default_value($nid),
+        );
+
+        foreach ($hubspot_form_options as $key => $value) {
+          if ($key != '--donotmap--') {
+            $form['webforms']['nid-' . $nid][$key] = array(
+              '#title' => t('Field mappings for ' . $value),
+              '#type' => 'fieldset',
+              '#states' => array(
+                'visible' => array(
+                  ':input[name="webforms[nid-' . $nid . '][hubspot_form]"]' => array('value' => $key),
+                ),
+              ),
+            );
+
+            foreach ($node->webform['components'] as $component) {
+              $form['webforms']['nid-' . $nid][$key][$component['form_key']] = array(
+                '#title' => $component['name'],
+                '#type' => 'select',
+                '#options' => $hubspot_field_options[$key]['fields'],
+                '#default_value' => _hubspot_default_value($nid, $key, $component['form_key']),
+              );
+            }
+          }
+        }
+      }
+    }
+  }
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => ('Save Configuration'),
+  );
+
+  return $form;
 }
 
 /**
- * Validation for hubspot_admin_settings form. Ensure that the Portal ID
- * has been entered and the debug email address provided is valid if debugging
- * is enabled.
+ * Submit handler for hubspot_admin_settings form.
+ */
+function hubspot_admin_settings_submit($form, &$form_state) {
+  variable_set('hubspot_portalid', $form_state['values']['hubspot_portalid']);
+  variable_set('hubspot_debug_email', $form_state['values']['hubspot_debug_email']);
+  variable_set('hubspot_debug_on', $form_state['values']['hubspot_debug_on']);
+  variable_set('hubspot_log_code', $form_state['values']['hubspot_log_code']);
+
+  $txn = db_transaction();
+
+  foreach ($form_state['values']['webforms'] as $key => $settings) {
+    db_delete('hubspot')->condition('nid', str_replace('nid-', '', $key))->execute();
+
+    if ($settings['hubspot_form'] != '--donotmap--') {
+      foreach($settings[$settings['hubspot_form']] as $webform_field => $hubspot_field) {
+        $fields = array('nid' => str_replace('nid-', '', $key), 'hubspot_guid' => $settings['hubspot_form'], 'webform_field' => $webform_field, 'hubspot_field' => $hubspot_field);
+        db_insert('hubspot')->fields($fields)->execute();
+      }
+    }
+  }
+
+  drupal_set_message('The configuration options have been saved.');
+}
+
+/**
+ * Validation for hubspot_admin_settings form. Ensure that the debug email
+ * debug email address provided is valid if debugging is enabled.
  */
 function hubspot_admin_settings_validate($form, &$form_state) {
   if ($form_state['values']['hubspot_debug_on'] &&
@@ -83,7 +207,7 @@ function hubspot_oauth_submit($form, &$form_state) {
     'client_id' => HUBSPOT_CLIENT_ID,
     'portalId' => $form_state['values']['hubspot_portalid'],
     'redirect_uri' => url('hubspot/oauth', array('query' => drupal_get_destination(), 'absolute' => TRUE)),
-    'scope' => 'leads-rw offline',
+    'scope' => HUBSPOT_SCOPE,
   );
   $form_state['redirect'][] = url('https://app.hubspot.com/auth/authenticate', array('query' => $data));
 }
@@ -118,4 +242,37 @@ function hubspot_oauth_disconnect($form, &$form_state) {
     variable_del('hubspot_access_token');
     variable_del('hubspot_refresh_token');
     variable_del('hubspot_expires_in');
+}
+
+/**
+ * Get the list of forms from HubSpot via the API.
+ */
+function _hubspot_get_forms() {
+  $access_token = variable_get('hubspot_access_token', '');
+  
+  if (empty($access_token)) {
+    return array('error' => t('This site is not connected to a Hubspot Account.'));
+  }
+
+  $request = drupal_http_request("https://api.hubapi.com/contacts/v1/forms?access_token={$access_token}");
+  if ($request->code == 401) {
+    $refresh = hubspot_oauth_refresh();
+    if ($refresh) {
+      $access_token = variable_get('hubspot_access_token', '');
+      $request = drupal_http_request("https://api.hubapi.com/contacts/v1/forms?access_token={$access_token}");
+    }
+  }
+  return array('value' => drupal_json_decode($request->data));
+}
+
+/**
+ * Return the default value for the given arguments.
+ */
+function _hubspot_default_value($nid, $hubspot_guid = NULL, $webform_field = NULL) {
+  if (empty($hubspot_guid)) {
+    return db_query("SELECT hubspot_guid FROM {hubspot} h WHERE h.nid = :nid LIMIT 1", array(':nid' => $nid))->fetchField();
+  }
+  else {
+    return db_query("SELECT hubspot_field FROM {hubspot} h WHERE h.nid = :nid AND h.hubspot_guid = :guid AND h.webform_field = :webform_field LIMIT 1", array(':nid' => $nid, ':guid' => $hubspot_guid, ':webform_field' => $webform_field))->fetchField();
+  }
 }
