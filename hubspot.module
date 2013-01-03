@@ -35,6 +35,19 @@ function hubspot_menu() {
     'file' => 'hubspot.admin.inc',
   );
 
+  // Node HubSpot forms.
+  $items['node/%webform_menu/webform/hubspot'] = array(
+    'title' => 'HubSpot',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('hubspot_form_settings', 1),
+    'access callback' => 'node_access',
+    'access arguments' => array('update', 1),
+    'weight' => 10,
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'hubspot.settings.inc',
+  );
+
+
   return $items;
 }
 
@@ -342,10 +355,43 @@ function hubspot_help($path, $arg) {
       $output .= '<p>' . t('HubSpot supports using a JavaScript tracking system to analyze potential leads on your site. You can get the JavaScript code from your HubSpot settings, under External Site Traffic Logging, and paste it into the HubSpot integration settings page in Drupal to have it automatically included on every page.') . '</p>';
       break;
     
-    case 'node/%/webform':
-      $output .= '<p>' . t('If you\'d like this form\'s results to be posted to HubSpot\'s leads tracking system, make sure it has a "HubSput POST URL" component filled in with the information from the HubSpot Lead API page in your HubSpot settings.') . '</p>';
+    case 'node/%/webform/hubspot':
+      $output .= '<p>' . t('To post this form\'s results to HubSpot you will need to select the HubSpot form and map the webform fields to the available HubSpot fields.') . '</p>';
       break;
   }
   return $output;
+}
+
+/**
+ * Get the list of forms from HubSpot via the API.
+ */
+function _hubspot_get_forms() {
+  $access_token = variable_get('hubspot_access_token', '');
+  
+  if (empty($access_token)) {
+    return array('error' => t('This site is not connected to a Hubspot Account.'));
+  }
+
+  $request = drupal_http_request("https://api.hubapi.com/contacts/v1/forms?access_token={$access_token}");
+  if ($request->code == 401) {
+    $refresh = hubspot_oauth_refresh();
+    if ($refresh) {
+      $access_token = variable_get('hubspot_access_token', '');
+      $request = drupal_http_request("https://api.hubapi.com/contacts/v1/forms?access_token={$access_token}");
+    }
+  }
+  return array('value' => drupal_json_decode($request->data));
+}
+
+/**
+ * Return the default value for the given arguments.
+ */
+function _hubspot_default_value($nid, $hubspot_guid = NULL, $webform_field = NULL) {
+  if (empty($hubspot_guid)) {
+    return db_query("SELECT hubspot_guid FROM {hubspot} h WHERE h.nid = :nid LIMIT 1", array(':nid' => $nid))->fetchField();
+  }
+  else {
+    return db_query("SELECT hubspot_field FROM {hubspot} h WHERE h.nid = :nid AND h.hubspot_guid = :guid AND h.webform_field = :webform_field LIMIT 1", array(':nid' => $nid, ':guid' => $hubspot_guid, ':webform_field' => $webform_field))->fetchField();
+  }
 }
 

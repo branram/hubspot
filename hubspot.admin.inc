@@ -244,35 +244,3 @@ function hubspot_oauth_disconnect($form, &$form_state) {
     variable_del('hubspot_expires_in');
 }
 
-/**
- * Get the list of forms from HubSpot via the API.
- */
-function _hubspot_get_forms() {
-  $access_token = variable_get('hubspot_access_token', '');
-  
-  if (empty($access_token)) {
-    return array('error' => t('This site is not connected to a Hubspot Account.'));
-  }
-
-  $request = drupal_http_request("https://api.hubapi.com/contacts/v1/forms?access_token={$access_token}");
-  if ($request->code == 401) {
-    $refresh = hubspot_oauth_refresh();
-    if ($refresh) {
-      $access_token = variable_get('hubspot_access_token', '');
-      $request = drupal_http_request("https://api.hubapi.com/contacts/v1/forms?access_token={$access_token}");
-    }
-  }
-  return array('value' => drupal_json_decode($request->data));
-}
-
-/**
- * Return the default value for the given arguments.
- */
-function _hubspot_default_value($nid, $hubspot_guid = NULL, $webform_field = NULL) {
-  if (empty($hubspot_guid)) {
-    return db_query("SELECT hubspot_guid FROM {hubspot} h WHERE h.nid = :nid LIMIT 1", array(':nid' => $nid))->fetchField();
-  }
-  else {
-    return db_query("SELECT hubspot_field FROM {hubspot} h WHERE h.nid = :nid AND h.hubspot_guid = :guid AND h.webform_field = :webform_field LIMIT 1", array(':nid' => $nid, ':guid' => $hubspot_guid, ':webform_field' => $webform_field))->fetchField();
-  }
-}
