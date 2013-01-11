@@ -256,7 +256,20 @@ function hubspot_webform_submission_insert($node, $submission) {
 
   foreach ($node->webform['components'] as $data_id => $data) {
     if ($result = db_query("SELECT hubspot_field FROM {hubspot} h WHERE h.nid = :nid AND h.hubspot_guid = :guid AND h.webform_field = :webform_field LIMIT 1", array(':nid' => $node->nid, ':guid' => $hubspot_form_guid, ':webform_field' => $data['form_key']))->fetchField()) {
-      $fields[$result] = $submission->data[$data_id]['value'][0];
+      if (count($submission->data[$data_id]['value']) > 1) {
+        $fields[$result] = '';
+        foreach ($submission->data[$data_id]['value'] as $value) {
+          if (!empty($fields[$result])) {
+            $fields[$result] .= ';' . $value;
+          }
+          else {
+            $fields[$result] .= $value;
+          }
+        }
+      }
+      else {
+        $fields[$result] = $submission->data[$data_id]['value'][0];
+      }
     }
   }
 
