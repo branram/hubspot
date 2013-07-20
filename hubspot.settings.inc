@@ -23,7 +23,7 @@ function hubspot_form_settings($form, $form_state, $node) {
         $hubspot_form_options[$hubspot_form['guid']] = $hubspot_form['name'];
         $hubspot_field_options[$hubspot_form['guid']]['fields']['--donotmap--'] = "Do Not Map";
         foreach ($hubspot_form['fields'] as $hubspot_field) {
-          $hubspot_field_options[$hubspot_form['guid']]['fields'][$hubspot_field['name']] = $hubspot_field['label'];
+          $hubspot_field_options[$hubspot_form['guid']]['fields'][$hubspot_field['name']] = $hubspot_field['label'] ? $hubspot_field['label'] : $hubspot_field['name'];
         }
       }
 
