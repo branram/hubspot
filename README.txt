@@ -1,43 +1,23 @@
 Requirements
 ------------
 
-This module currently requires Drupal 6.x or 7.x, Webform 3.x, and a HubSpot
+This module currently requires 7.x, Webform 3.x, and a HubSpot
 account with access to the HubSpot API.
 
-Installation
-------------
 
-Upload and install the Webform module before this module. Install this module
-as usual, then head to the HubSpot integration settings under Configuration
-(admin/config/services/hubspot). Enter your HubSpot Portal ID and the JavaScript
-tracking code.
-
-You can find your Portal ID by logging into HupSpot, going to the Dashboard and
-examining the url. The number located between "dashboard-plus" and "dash" is the
-Portal ID.
-
-Example: https://app.hubspot.com/dashboard-plus/12345/dash/
-Portal ID: 12345
-
-The JavaScript tracking code can be found on the HubSpot Settings page, under
-External Site Traffic Logging. Copy and paste it directly into the
-configuration page and it will automatically be inserted into your site.
-
-If Webform submissions don't seem to be working, check the Drupal error log or
-enable the debugging system in this module's configuration page. Any HubSpot
-errors will then be emailed to you directly so you can diagnose the issue.
-
-Further Information
+Installation Information
 -------------------
 
-You can find more detailed help on how to use HubSpot with Webforms in this
+You can find detailed help on how to use HubSpot with Webforms in this
 module's Help page in the Drupal administrator interface. Head to Help and
 select "HubSpot Drupal integration" for complete instructions.
 
 Extended documentation, with instructions on using HubSpot's Salesforce
 integration and details on automated receipt emails, is available in the Drupal
 handbook pages:
-  http://drupal.org/node/1195370
+
+http://drupal.org/node/1195370
+
 
 Sponsorship
 -----------
