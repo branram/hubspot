@@ -247,6 +247,8 @@ function hubspot_webform_submission_insert($node, $submission) {
   $hs_context = array(
     'hutk' => isset($_COOKIE['hubspotutk']) ? $_COOKIE['hubspotutk'] : '',
     'ipAddress' => ip_address(),
+    'pageName' => $node->title,
+    'pageUrl' => url('node/'.$node->nid, array('absolute' => true)),
   );
 
   $fields['hs_context'] = drupal_json_encode($hs_context);
