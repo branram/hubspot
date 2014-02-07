@@ -252,7 +252,13 @@ function hubspot_webform_submission_insert($node, $submission) {
   $fields['hs_context'] = drupal_json_encode($hs_context);
 
   foreach ($node->webform['components'] as $data_id => $data) {
-    if ($result = db_query("SELECT hubspot_field FROM {hubspot} h WHERE h.nid = :nid AND h.hubspot_guid = :guid AND h.webform_field = :webform_field LIMIT 1", array(':nid' => $node->nid, ':guid' => $hubspot_form_guid, ':webform_field' => $data['form_key']))->fetchField()) {
+    // Skip if there is no data
+    if (!isset($submission->data[$data_id])) {
+      continue;
+    }
+
+    $result = db_query("SELECT hubspot_field FROM {hubspot} h WHERE h.nid = :nid AND h.hubspot_guid = :guid AND h.webform_field = :webform_field LIMIT 1", array(':nid' => $node->nid, ':guid' => $hubspot_form_guid, ':webform_field' => $data['form_key']))->fetchField();
+    if ($result) {
       if (count($submission->data[$data_id]['value']) > 1) {
         $fields[$result] = '';
         foreach ($submission->data[$data_id]['value'] as $value) {
@@ -383,4 +389,3 @@ function _hubspot_default_value($nid, $hubspot_guid = NULL, $webform_field = NUL
     return db_query("SELECT hubspot_field FROM {hubspot} h WHERE h.nid = :nid AND h.hubspot_guid = :guid AND h.webform_field = :webform_field LIMIT 1", array(':nid' => $nid, ':guid' => $hubspot_guid, ':webform_field' => $webform_field))->fetchField();
   }
 }
-
