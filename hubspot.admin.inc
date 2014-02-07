@@ -176,13 +176,16 @@ function hubspot_admin_settings_submit($form, &$form_state) {
 
   $txn = db_transaction();
 
-  foreach ($form_state['values']['webforms'] as $key => $settings) {
-    db_delete('hubspot')->condition('nid', str_replace('nid-', '', $key))->execute();
+  // Check if webform values even exist before continuing.
+  if(isset($form_state['values']['webforms'])){
+    foreach ($form_state['values']['webforms'] as $key => $settings) {
+      db_delete('hubspot')->condition('nid', str_replace('nid-', '', $key))->execute();
 
-    if ($settings['hubspot_form'] != '--donotmap--') {
-      foreach($settings[$settings['hubspot_form']] as $webform_field => $hubspot_field) {
-        $fields = array('nid' => str_replace('nid-', '', $key), 'hubspot_guid' => $settings['hubspot_form'], 'webform_field' => $webform_field, 'hubspot_field' => $hubspot_field);
-        db_insert('hubspot')->fields($fields)->execute();
+      if ($settings['hubspot_form'] != '--donotmap--') {
+        foreach($settings[$settings['hubspot_form']] as $webform_field => $hubspot_field) {
+          $fields = array('nid' => str_replace('nid-', '', $key), 'hubspot_guid' => $settings['hubspot_form'], 'webform_field' => $webform_field, 'hubspot_field' => $hubspot_field);
+          db_insert('hubspot')->fields($fields)->execute();
+        }
       }
     }
   }
