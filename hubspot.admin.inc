@@ -26,7 +26,7 @@ function hubspot_admin_settings() {
     '#default_value' => variable_get('hubspot_portalid', ''),
     '#description' => t('Enter the Hubspot Portal ID for this site.  It can be found by <a href="https://login.hubspot.com/login" target="_blank">logging into HubSpot</a> going to the Dashboard and examining the url. Example: "https://app.hubspot.com/dashboard-plus/12345/dash/".  The number after "dashboard-plus" is your Portal ID.'),
   );
-  
+
   if (variable_get('hubspot_portalid', '')) {
     $form['settings']['hubspot_authentication'] = array(
       '#value' => t('Connect Hubspot Account'),
@@ -34,35 +34,35 @@ function hubspot_admin_settings() {
       '#validate' => array(),
       '#submit' => array('hubspot_oauth_submit'),
     );
-    
+
     if (variable_get('hubspot_refresh_token','')) {
       $form['settings']['hubspot_authentication']['#suffix'] = t('Your Hubspot account is connected.');
       $form['settings']['hubspot_authentication']['#value'] = t('Disconnect Hubspot Account');
       $form['settings']['hubspot_authentication']['#submit'] = array('hubspot_oauth_disconnect');
     }
   }
-  
+
   $form['settings']['hubspot_log_code'] = array(
     '#title' => t('HubSpot Traffic Logging Code'),
     '#type' => 'textarea',
     '#default_value' => variable_get('hubspot_log_code', ''),
     '#description' => t('To enable HubSpot traffic logging on your site, paste the External Site Traffic Logging code here.'),
   );
-  
+
   $form['debug'] = array(
     '#title' => t('Debugging'),
     '#type' => 'fieldset',
     '#collapsible' => TRUE,
     '#group' => 'additional_settings',
   );
-  
+
   $form['debug']['hubspot_debug_on'] = array(
     '#title' => t('Debugging enabled'),
     '#type' => 'checkbox',
     '#default_value' => variable_get('hubspot_debug_on', 0),
     '#description' => t('If debugging is enabled, HubSpot errors will be emailed to the address below. Otherwise, they will be logged to the regular Drupal error log.'),
   );
-  
+
   $form['debug']['hubspot_debug_email'] = array(
     '#title' => t('Debugging email'),
     '#type' => 'textfield',
@@ -209,6 +209,7 @@ function hubspot_oauth_submit($form, &$form_state) {
     'redirect_uri' => url('hubspot/oauth', array('query' => drupal_get_destination(), 'absolute' => TRUE)),
     'scope' => HUBSPOT_SCOPE,
   );
+
   $form_state['redirect'][] = url('https://app.hubspot.com/auth/authenticate', array('query' => $data));
 }
 

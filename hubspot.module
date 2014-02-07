@@ -4,10 +4,7 @@
  * Sends Webform results to HubSpot's Forms API by using Webform's provided hooks.
  */
 
- define('HUBSPOT_SLUG','hubspot-drupal');
  define('HUBSPOT_CLIENT_ID','734f89bf-1b88-11e1-829a-3b413536dd4c');
- define('HUBSPOT_APP_PAGE','https://app.hubspot.com/market/front/hubspot-drupal');
- define('HUBSPOT_GUID','b147161c-4e34-4d90-bb95-e4594dcb98fb');
  define('HUBSPOT_SCOPE','leads-rw contacts-rw offline');
 
 /**
