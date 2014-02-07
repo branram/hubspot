@@ -240,8 +240,8 @@ function hubspot_oauth_connect() {
  * Deletes Hubspot OAuth tokens.
  */
 function hubspot_oauth_disconnect($form, &$form_state) {
-    variable_del('hubspot_access_token');
-    variable_del('hubspot_refresh_token');
-    variable_del('hubspot_expires_in');
+  variable_del('hubspot_access_token');
+  variable_del('hubspot_refresh_token');
+  variable_del('hubspot_expires_in');
 }
 
