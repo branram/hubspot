@@ -230,6 +230,15 @@ function hubspot_get_recent($n = 5) {
  * hook_webform_submission_insert().
  */
 function hubspot_webform_submission_insert($node, $submission) {
+  // Get the Webform version
+  $webform_path = drupal_get_path('module', 'webform') . '/webform.info';
+  $webform_info = drupal_parse_info_file($webform_path);
+
+  $matches = array();
+  if(preg_match('/^(\d+\.x-)?(\d+)\..*$/', $webform_info['version'], $matches)) {
+    $webform_major_version = $matches[2];
+  }
+
   if ($submission->is_draft == 1) {
     return;
   }
@@ -258,12 +267,17 @@ function hubspot_webform_submission_insert($node, $submission) {
     if (!isset($submission->data[$data_id])) {
       continue;
     }
+    else {
+      // Get the component value (submission structure differs from Webform 3 and 4).
+      // https://drupal.org/node/1609324#submission-structure
+      $component_data = $webform_major_version <= 3 ? $submission->data[$data_id]['value'] : $submission->data[$data_id];
+    }
 
     $result = db_query("SELECT hubspot_field FROM {hubspot} h WHERE h.nid = :nid AND h.hubspot_guid = :guid AND h.webform_field = :webform_field LIMIT 1", array(':nid' => $node->nid, ':guid' => $hubspot_form_guid, ':webform_field' => $data['form_key']))->fetchField();
     if ($result) {
-      if (count($submission->data[$data_id]['value']) > 1) {
+      if (count($component_data) > 1) {
         $fields[$result] = '';
-        foreach ($submission->data[$data_id]['value'] as $value) {
+        foreach ($component_data as $value) {
           if (!empty($fields[$result])) {
             $fields[$result] .= ';' . $value;
           }
@@ -273,7 +287,7 @@ function hubspot_webform_submission_insert($node, $submission) {
         }
       }
       else {
-        $fields[$result] = $submission->data[$data_id]['value'][0];
+        $fields[$result] = $component_data[0];
       }
     }
   }
