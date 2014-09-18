@@ -4,6 +4,16 @@
  * Provides admin settings page to adjust form submission settings.
  */
 
+/**
+ * Form constructor for the Hubspot settings form.
+ *
+ * @param $form
+ * @param $form_state
+ * @param object $node
+ *   The node using Hubspot.
+ *
+ * @return array
+ */
 function hubspot_form_settings($form, $form_state, $node) {
   $form = array();
 
@@ -44,7 +54,7 @@ function hubspot_form_settings($form, $form_state, $node) {
       foreach ($hubspot_form_options as $key => $value) {
         if ($key != '--donotmap--') {
           $form[$key] = array(
-            '#title' => t('Field mappings for ' . $value),
+            '#title' => t('Field mappings for @field', array('field' => $value)),
             '#type' => 'fieldset',
             '#tree' => TRUE,
             '#states' => array(
@@ -84,12 +94,16 @@ function hubspot_form_settings_submit($form, &$form_state) {
   db_delete('hubspot')->condition('nid', $form_state['values']['nid'])->execute();
 
   if ($form_state['values']['hubspot_form'] != '--donotmap--') {
-    foreach($form_state['values'][$form_state['values']['hubspot_form']] as $webform_field => $hubspot_field) {
-      $fields = array('nid' => $form_state['values']['nid'], 'hubspot_guid' => $form_state['values']['hubspot_form'], 'webform_field' => $webform_field, 'hubspot_field' => $hubspot_field);
+    foreach ($form_state['values'][$form_state['values']['hubspot_form']] as $webform_field => $hubspot_field) {
+      $fields = array(
+        'nid' => $form_state['values']['nid'],
+        'hubspot_guid' => $form_state['values']['hubspot_form'],
+        'webform_field' => $webform_field,
+        'hubspot_field' => $hubspot_field,
+      );
       db_insert('hubspot')->fields($fields)->execute();
     }
   }
 
-  drupal_set_message('The configuration options have been saved.');
+  drupal_set_message(t('The configuration options have been saved.'));
 }
-
