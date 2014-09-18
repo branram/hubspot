@@ -98,7 +98,7 @@ function hubspot_admin_settings() {
         $hubspot_form_options[$hubspot_form['guid']] = $hubspot_form['name'];
         $hubspot_field_options[$hubspot_form['guid']]['fields']['--donotmap--'] = "Do Not Map";
         foreach ($hubspot_form['fields'] as $hubspot_field) {
-          $hubspot_field_options[$hubspot_form['guid']]['fields'][$hubspot_field['name']] = $hubspot_field['label'];
+          $hubspot_field_options[$hubspot_form['guid']]['fields'][$hubspot_field['name']] = $hubspot_field['label'] . ' (' . $hubspot_field['fieldType'] . ')';
         }
       }
 
@@ -144,12 +144,14 @@ function hubspot_admin_settings() {
             );
 
             foreach ($node->webform['components'] as $component) {
-              $form['webforms']['nid-' . $nid][$key][$component['form_key']] = array(
-                '#title' => $component['name'],
-                '#type' => 'select',
-                '#options' => $hubspot_field_options[$key]['fields'],
-                '#default_value' => _hubspot_default_value($nid, $key, $component['form_key']),
-              );
+              if ($component['type'] !== 'markup'){
+                $form['webforms']['nid-' . $nid][$key][$component['form_key']] = array(
+                  '#title' => $component['name'] . ' (' . $component['type'] . ')',
+                  '#type' => 'select',
+                  '#options' => $hubspot_field_options[$key]['fields'],
+                  '#default_value' => _hubspot_default_value($nid, $key, $component['form_key']),
+                );
+              }
             }
           }
         }
