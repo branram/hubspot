@@ -374,17 +374,7 @@ function hubspot_webform_submission_insert($node, $submission) {
  *   - HTTPCode: The HTTP response code of the request.
  */
 function hubspot_insert_lead($portal_id, $form_guid, $fields) {
-  $str_post = "";
-
-  // Turn $fields into POST-compatible list of parameters.
-  foreach ($fields as $field_name => $field_value) {
-    $str_post .= urlencode($field_name) . '=';
-    $str_post .= urlencode($field_value);
-    $str_post .= '&';
-  }
-
-  // Nuke the final ampersand.
-  $str_post = rtrim($str_post, '&');
+  $str_post = drupal_http_build_query($fields);
 
   // Send POST data.
   $result = drupal_http_request('https://forms.hubspot.com/uploads/form/v2/' . $portal_id . '/' . $form_guid, array(
