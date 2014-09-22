@@ -5,6 +5,12 @@
  * JavaScript embedding, and form submission settings.
  */
 
+/**
+ * Form constructor for the Hubspot admin settings form.
+ *
+ * @see hubspot_admin_settings_validate()
+ * @see hubspot_admin_settings_submit()
+ */
 function hubspot_admin_settings() {
   $form = array();
 
@@ -24,7 +30,10 @@ function hubspot_admin_settings() {
     '#type' => 'textfield',
     '#required' => TRUE,
     '#default_value' => variable_get('hubspot_portalid', ''),
-    '#description' => t('Enter the Hubspot Portal ID for this site.  It can be found by <a href="https://login.hubspot.com/login" target="_blank">logging into HubSpot</a> going to the Dashboard and examining the url. Example: "https://app.hubspot.com/dashboard-plus/12345/dash/".  The number after "dashboard-plus" is your Portal ID.'),
+    '#description' => t('Enter the Hubspot Portal ID for this site.  It can be found by
+      <a href="https://login.hubspot.com/login" target="_blank">logging into HubSpot</a> going to the Dashboard and
+      examining the url. Example: "https://app.hubspot.com/dashboard-plus/12345/dash/".  The number after
+      "dashboard-plus" is your Portal ID.'),
   );
 
   if (variable_get('hubspot_portalid', '')) {
@@ -35,7 +44,7 @@ function hubspot_admin_settings() {
       '#submit' => array('hubspot_oauth_submit'),
     );
 
-    if (variable_get('hubspot_refresh_token','')) {
+    if (variable_get('hubspot_refresh_token', '')) {
       $form['settings']['hubspot_authentication']['#suffix'] = t('Your Hubspot account is connected.');
       $form['settings']['hubspot_authentication']['#value'] = t('Disconnect Hubspot Account');
       $form['settings']['hubspot_authentication']['#submit'] = array('hubspot_oauth_disconnect');
@@ -46,7 +55,8 @@ function hubspot_admin_settings() {
     '#title' => t('HubSpot Traffic Logging Code'),
     '#type' => 'textarea',
     '#default_value' => variable_get('hubspot_log_code', ''),
-    '#description' => t('To enable HubSpot traffic logging on your site, paste the External Site Traffic Logging code here.'),
+    '#description' => t('To enable HubSpot traffic logging on your site, paste the External Site Traffic Logging code
+      here.'),
   );
 
   $form['debug'] = array(
@@ -60,7 +70,8 @@ function hubspot_admin_settings() {
     '#title' => t('Debugging enabled'),
     '#type' => 'checkbox',
     '#default_value' => variable_get('hubspot_debug_on', 0),
-    '#description' => t('If debugging is enabled, HubSpot errors will be emailed to the address below. Otherwise, they will be logged to the regular Drupal error log.'),
+    '#description' => t('If debugging is enabled, HubSpot errors will be emailed to the address below. Otherwise, they
+      will be logged to the regular Drupal error log.'),
   );
 
   $form['debug']['hubspot_debug_email'] = array(
@@ -134,7 +145,7 @@ function hubspot_admin_settings() {
         foreach ($hubspot_form_options as $key => $value) {
           if ($key != '--donotmap--') {
             $form['webforms']['nid-' . $nid][$key] = array(
-              '#title' => t('Field mappings for ' . $value),
+              '#title' => t('Field mappings for @field', array('@field' => $value)),
               '#type' => 'fieldset',
               '#states' => array(
                 'visible' => array(
@@ -168,7 +179,7 @@ function hubspot_admin_settings() {
 }
 
 /**
- * Submit handler for hubspot_admin_settings form.
+ * Submit handler for hubspot_admin_settings().
  */
 function hubspot_admin_settings_submit($form, &$form_state) {
   variable_set('hubspot_portalid', $form_state['values']['hubspot_portalid']);
@@ -179,25 +190,32 @@ function hubspot_admin_settings_submit($form, &$form_state) {
   $txn = db_transaction();
 
   // Check if webform values even exist before continuing.
-  if(isset($form_state['values']['webforms'])){
+  if (isset($form_state['values']['webforms'])) {
     foreach ($form_state['values']['webforms'] as $key => $settings) {
       db_delete('hubspot')->condition('nid', str_replace('nid-', '', $key))->execute();
 
       if ($settings['hubspot_form'] != '--donotmap--') {
-        foreach($settings[$settings['hubspot_form']] as $webform_field => $hubspot_field) {
-          $fields = array('nid' => str_replace('nid-', '', $key), 'hubspot_guid' => $settings['hubspot_form'], 'webform_field' => $webform_field, 'hubspot_field' => $hubspot_field);
+        foreach ($settings[$settings['hubspot_form']] as $webform_field => $hubspot_field) {
+          $fields = array(
+            'nid' => str_replace('nid-', '', $key),
+            'hubspot_guid' => $settings['hubspot_form'],
+            'webform_field' => $webform_field,
+            'hubspot_field' => $hubspot_field,
+          );
           db_insert('hubspot')->fields($fields)->execute();
         }
       }
     }
   }
 
-  drupal_set_message('The configuration options have been saved.');
+  drupal_set_message(t('The configuration options have been saved.'));
 }
 
 /**
- * Validation for hubspot_admin_settings form. Ensure that the debug email
- * debug email address provided is valid if debugging is enabled.
+ * Form validation handler for hubspot_admin_settings().
+ *
+ * Ensures that the debug email address provided is valid if debugging is
+ * enabled.
  */
 function hubspot_admin_settings_validate($form, &$form_state) {
   if ($form_state['values']['hubspot_debug_on'] &&
@@ -207,6 +225,9 @@ function hubspot_admin_settings_validate($form, &$form_state) {
 
 }
 
+/**
+ * Form submission handler for hubspot_admin_settings().
+ */
 function hubspot_oauth_submit($form, &$form_state) {
   $data = array(
     'client_id' => HUBSPOT_CLIENT_ID,
@@ -233,7 +254,8 @@ function hubspot_oauth_connect() {
   }
 
   if (!empty($_GET['error']) && $_GET['error'] == "access_denied") {
-    drupal_set_message(t('You denied the request for authentication with Hubspot. Please click the button again and choose the AUTHORIZE option.'),'error',FALSE);
+    drupal_set_message(t('You denied the request for authentication with Hubspot. Please click the button again and
+      choose the AUTHORIZE option.'), 'error', FALSE);
   }
 
   drupal_goto();
@@ -249,4 +271,3 @@ function hubspot_oauth_disconnect($form, &$form_state) {
   variable_del('hubspot_refresh_token');
   variable_del('hubspot_expires_in');
 }
-

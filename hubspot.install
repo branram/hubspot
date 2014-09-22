@@ -1,19 +1,21 @@
 <?php
 /**
  * @file
- * Handle install/uninstall and warn users of problems with disabled Webform components.
+ * Installation file for hubspot.
  */
- 
+
 /**
- * Implements hook_install() to notify user of successful installation.
+ * Implements hook_install().
  */
 function hubspot_install() {
-  drupal_set_message(st('The HubSpot module has been successfully installed. Configure it in the !link.',
-                        array('!link' => l('HubSpot integration settings', 'admin/config/services/hubspot'))), 'status');
+  $t = get_t();
+  drupal_set_message($t('The HubSpot module has been successfully installed. Configure it in the !link.', array(
+    '!link' => l($t('HubSpot integration settings'), 'admin/config/services/hubspot'),
+  )), 'status');
 }
 
 /**
- * Implements hook_uninstall() to remove our saved variables and all traces of the hubspot_url component
+ * Implements hook_uninstall().
  */
 function hubspot_uninstall() {
   variable_del('hubspot_debug_on');
@@ -65,7 +67,7 @@ function hubspot_schema() {
 }
 
 /**
- * Implements hook_update_N. Initial introduction of the schema.
+ * Initial introduction of the schema.
  */
 function hubspot_update_7201() {
   $schema['hubspot'] = array(
@@ -102,4 +104,3 @@ function hubspot_update_7201() {
   );
   db_create_table('hubspot', $schema['hubspot']);
 }
-
