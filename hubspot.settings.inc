@@ -32,6 +32,7 @@ function hubspot_form_settings($form, $form_state, $node) {
       foreach ($hubspot_forms['value'] as $hubspot_form) {
         $hubspot_form_options[$hubspot_form['guid']] = $hubspot_form['name'];
         $hubspot_field_options[$hubspot_form['guid']]['fields']['--donotmap--'] = "Do Not Map";
+
         foreach ($hubspot_form['fields'] as $hubspot_field) {
           $hubspot_field_options[$hubspot_form['guid']]['fields'][$hubspot_field['name']] = ($hubspot_field['label'] ? $hubspot_field['label'] : $hubspot_field['name']) . ' (' . $hubspot_field['fieldType'] . ')';
         }
@@ -65,7 +66,19 @@ function hubspot_form_settings($form, $form_state, $node) {
           );
 
           foreach ($node->webform['components'] as $component) {
-            if ($component['type'] !== 'markup'){
+            if ($component['type'] == 'addressfield' && module_exists('addressfield_tokens')) {
+              $addressfield_fields = addressfield_tokens_components();
+
+              foreach ($addressfield_fields as $addressfield_key => $addressfield_value) {
+                $form[$key][$component['form_key'] . '_' . $addressfield_key] = array(
+                  '#title' => $component['name'] . ': ' . $addressfield_value . ' (' . $component['type'] . ')',
+                  '#type' => 'select',
+                  '#options' => $hubspot_field_options[$key]['fields'],
+                  '#default_value' => _hubspot_default_value($nid, $key, $component['form_key'] . '_' . $addressfield_key),
+                );
+              }
+            }
+            elseif ($component['type'] !== 'markup') {
               $form[$key][$component['form_key']] = array(
                 '#title' => $component['name'] . ' (' . $component['type'] . ')',
                 '#type' => 'select',

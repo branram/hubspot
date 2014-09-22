@@ -254,7 +254,8 @@ function hubspot_webform_submission_insert($node, $submission) {
   $webform_info = drupal_parse_info_file($webform_path);
 
   $matches = array();
-  if(preg_match('/^(\d+\.x-)?(\d+)\..*$/', $webform_info['version'], $matches)) {
+
+  if (preg_match('/^(\d+\.x-)?(\d+)\..*$/', $webform_info['version'], $matches)) {
     $webform_major_version = $matches[2];
   }
 
@@ -294,26 +295,48 @@ function hubspot_webform_submission_insert($node, $submission) {
       $component_data = $webform_major_version <= 3 ? $submission->data[$data_id]['value'] : $submission->data[$data_id];
     }
 
-    $result = db_query_range("SELECT hubspot_field FROM {hubspot} h WHERE h.nid = :nid AND h.hubspot_guid = :guid AND h.webform_field = :webform_field", 0, 1, array(
+    $sql = "SELECT hubspot_field FROM {hubspot} h WHERE h.nid = :nid AND h.hubspot_guid = :guid AND h.webform_field = :webform_field";
+
+    if ($data['type'] == 'addressfield' && module_exists('addressfield_tokens')) {
+      $addressfield_fields = addressfield_tokens_components();
+      $addressfield_data = unserialize($component_data[0]);
+
+      foreach ($addressfield_fields as $addressfield_key => $addressfield_values) {
+        $result = db_query($sql, array(':nid' => $node->nid, ':guid' => $hubspot_form_guid, ':webform_field' => $data['form_key'] . '_' . $addressfield_key))->fetchField();
+
+        $result = db_query_range($sql, 0, 1, array(
+          ':nid' => $node->nid,
+          ':guid' => $hubspot_form_guid,
+          ':webform_field' => $data['form_key'] . '_' . $addressfield_key,
+        ))->fetchField();
+
+        if ($result && $result != '--donotmap--') {
+          $fields[$result] = $addressfield_data[$addressfield_key];
+        }
+      }
+    }
+    else {
+      $result = db_query_range($sql, 0, 1, array(
         ':nid' => $node->nid,
         ':guid' => $hubspot_form_guid,
         ':webform_field' => $data['form_key'],
-    ))->fetchField();
+      ))->fetchField();
 
-    if ($result) {
-      if (count($component_data) > 1) {
-        $fields[$result] = '';
-        foreach ($component_data as $value) {
-          if (!empty($fields[$result])) {
-            $fields[$result] .= ';' . $value;
-          }
-          else {
-            $fields[$result] .= $value;
+      if ($result && $result != '--donotmap--') {
+        if (count($component_data) > 1) {
+          $fields[$result] = '';
+          foreach ($component_data as $value) {
+            if (!empty($fields[$result])) {
+              $fields[$result] .= ';' . $value;
+            }
+            else {
+              $fields[$result] .= $value;
+            }
           }
         }
-      }
-      else {
-        $fields[$result] = $component_data[0];
+        elseif (isset($component_data[0])) {
+          $fields[$result] = $component_data[0];
+        }
       }
     }
   }

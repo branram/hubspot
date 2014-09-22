@@ -155,7 +155,7 @@ function hubspot_admin_settings() {
             );
 
             foreach ($node->webform['components'] as $component) {
-              if ($component['type'] !== 'markup'){
+              if ($component['type'] !== 'markup') {
                 $form['webforms']['nid-' . $nid][$key][$component['form_key']] = array(
                   '#title' => $component['name'] . ' (' . $component['type'] . ')',
                   '#type' => 'select',
