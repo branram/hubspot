@@ -229,6 +229,31 @@ function hubspot_webform_insert_lead($portal_id, $form_guid, $fields) {
 function hubspot_webform_help($path, $arg) {
   $output = '';
   switch ($path) {
+    case 'admin/help#hubspot':
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('The HubSpot module provides leads integration with the HubSpot API, allowing forms created
+        with the Webform module to submit their data to HubSpot for leads tracking. It also allows you to easily embed
+        the HubSpot JavaScript tracking code in your site to track the visits of each lead. Further information is
+        available in the Drupal <a href="http://drupal.org/node/1195370">handbook pages for this module.</a>') . '</p>';
+      $output .= '<h3>' . t('Creating a HubSpot Webform') . '</h3>';
+      $output .= '<p>' . t("To have a Webform's data sent to HubSpot for leads tracking, complete the following steps:")
+        . '</p>';
+      $output .= '<ol>';
+      $output .= '<li>' . t('Connect to your HubSpot account from the HubSpot settings page (links below).') . '</li>';
+      $output .= '<li>' . t('From the Webform tab of any webform you will now see the HubSpot "subtab" link below. Click
+       on that link.') . '</li>';
+      $output .= '<li>' . t('On that page you will see a dropdown listing all of your HubSpot forms (set up from
+        HubSpot.com). Select the form you want to map to this Webform.') . '</li>';
+      $output .= '<li>' . t('Finally, just go through each Webform fields and map them to the HubSpot form fields
+        available in each dropdown. Click save and you\'re done!') . '</li>';
+      $output .= '</ol>';
+      $output .= '<p>' . t('The Webform will now automatically send any submissions directly to HubSpot form you
+        configured.') . '</p>';
+      $output .= '<h3>' . t('HubSpot Javascript tracking code') . '</h3>';
+      $output .= '<p>' . t('HubSpot supports using a JavaScript tracking system to analyze potential leads on your site.
+        You can get the JavaScript code from your HubSpot settings, under External Site Traffic Logging, and paste it
+        into the HubSpot integration settings page in Drupal to have it automatically included on every page.') . '</p>';
+      break;
     case 'node/%/webform/hubspot':
       $output .= '<p>' . t("To post this form's results to HubSpot you will need to select the HubSpot form and map the
         webform fields to the available HubSpot fields.") . '</p>';
@@ -238,164 +263,11 @@ function hubspot_webform_help($path, $arg) {
 }
 
 /**
- * Returns the default value for the given arguments.
- */
-function _hubspot_webform_default_value($nid, $hubspot_guid = NULL, $webform_field = NULL) {
-  if (empty($hubspot_guid)) {
-    return db_query_range("SELECT hubspot_guid FROM {hubspot} h WHERE h.nid = :nid", 0, 1, array(':nid' => $nid))->fetchField();
-  }
-  else {
-    return db_query_range("SELECT hubspot_field FROM {hubspot} h WHERE h.nid = :nid AND h.hubspot_guid = :guid AND h.webform_field = :webform_field", 0, 1, array(
-      ':nid' => $nid,
-      ':guid' => $hubspot_guid,
-      ':webform_field' => $webform_field,
-    ))->fetchField();
-  }
-}
-
-/**
  * Implements hook_form_alter().
  */
 function hubspot_webform_form_alter(&$form, $form_state, $form_id) {
   if (strstr($form_id, 'hubspot_admin_settings')) {
-    $form['webforms'] = array(
-      '#title' => t('Webforms'),
-      '#type' => 'fieldset',
-      '#collapsible' => TRUE,
-      '#group' => 'additional_settings',
-      '#description' => 'The following webforms have been detected and can be configured to submit to the HubSpot API.',
-      '#tree' => TRUE,
-    );
-
-    $webform_nodes = variable_get('webform_node_types', array('webform'));
-    $nodes = array();
-
-    $hubspot_forms = _hubspot_webform_get_forms();
-
-    if (isset($hubspot_forms['error'])) {
-      $form['webforms']['#description'] = $hubspot_forms['error'];
-    }
-    else {
-      if (empty($hubspot_forms['value'])) {
-        $form['webforms']['#description'] = t('No HubSpot forms found. You will need to create a form on HubSpot before you can configure it here.');
-      }
-      else {
-        $hubspot_form_options = array("--donotmap--" => "Do Not Map");
-        $hubspot_field_options = array();
-        foreach ($hubspot_forms['value'] as $hubspot_form) {
-          $hubspot_form_options[$hubspot_form['guid']] = $hubspot_form['name'];
-          $hubspot_field_options[$hubspot_form['guid']]['fields']['--donotmap--'] = "Do Not Map";
-          foreach ($hubspot_form['fields'] as $hubspot_field) {
-            $hubspot_field_options[$hubspot_form['guid']]['fields'][$hubspot_field['name']] = $hubspot_field['label'] . ' (' . $hubspot_field['fieldType'] . ')';
-          }
-        }
-
-        foreach ($webform_nodes as $node_type) {
-          $query = new EntityFieldQuery();
-
-          $query->entityCondition('entity_type', 'node')
-            ->entityCondition('bundle', $node_type)
-            ->propertyCondition('status', 1);
-
-          $result = $query->execute();
-
-          if (isset($result['node'])) {
-            $node_ids = array_keys($result['node']);
-            $nodes = array_merge($nodes, entity_load('node', $node_ids));
-          }
-        }
-
-        foreach ($nodes as $node) {
-          $nid = $node->nid;
-          $form['webforms']['nid-' . $nid] = array(
-            '#title' => $node->title,
-            '#type' => 'fieldset',
-          );
-
-          $form['webforms']['nid-' . $nid]['hubspot_form'] = array(
-            '#title' => t('HubSpot form'),
-            '#type' => 'select',
-            '#options' => $hubspot_form_options,
-            '#default_value' => _hubspot_webform_default_value($nid),
-          );
-
-          foreach ($hubspot_form_options as $key => $value) {
-            if ($key != '--donotmap--') {
-              $form['webforms']['nid-' . $nid][$key] = array(
-                '#title' => t('Field mappings for @field', array('@field' => $value)),
-                '#type' => 'fieldset',
-                '#states' => array(
-                  'visible' => array(
-                    ':input[name="webforms[nid-' . $nid . '][hubspot_form]"]' => array('value' => $key),
-                  ),
-                ),
-              );
-
-              foreach ($node->webform['components'] as $component) {
-                if ($component['type'] !== 'markup') {
-                  $form['webforms']['nid-' . $nid][$key][$component['form_key']] = array(
-                    '#title' => $component['name'] . ' (' . $component['type'] . ')',
-                    '#type' => 'select',
-                    '#options' => $hubspot_field_options[$key]['fields'],
-                    '#default_value' => _hubspot_webform_default_value($nid, $key, $component['form_key']),
-                  );
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    $form['#submit'][] = 'hubspot_webform_settings_submit';
+    module_load_include('inc', 'hubspot_webform', 'hubspot_webform.admin');
+    _hubspot_webform_admin_settings($form);
   }
-}
-
-/**
- * Submit handler for hubspot_webform_settings().
- */
-function hubspot_webform_settings_submit($form, &$form_state) {
-  $txn = db_transaction();
-
-  // Check if webform values even exist before continuing.
-  if (isset($form_state['values']['webforms'])) {
-    foreach ($form_state['values']['webforms'] as $key => $settings) {
-      db_delete('hubspot')->condition('nid', str_replace('nid-', '', $key))->execute();
-
-      if ($settings['hubspot_form'] != '--donotmap--') {
-        foreach ($settings[$settings['hubspot_form']] as $webform_field => $hubspot_field) {
-          $fields = array(
-            'nid' => str_replace('nid-', '', $key),
-            'hubspot_guid' => $settings['hubspot_form'],
-            'webform_field' => $webform_field,
-            'hubspot_field' => $hubspot_field,
-          );
-          db_insert('hubspot')->fields($fields)->execute();
-        }
-      }
-    }
-  }
-}
-
-/**
- * Gets the list of forms from HubSpot via the API.
- */
-function _hubspot_webform_get_forms() {
-  $access_token = variable_get('hubspot_access_token', '');
-
-  if (empty($access_token)) {
-    return array('error' => t('This site is not connected to a HubSpot Account.'));
-  }
-
-  $request = drupal_http_request("https://api.hubapi.com/contacts/v1/forms?access_token={$access_token}");
-
-  if ($request->code == 401) {
-    $refresh = hubspot_oauth_refresh();
-    if ($refresh) {
-      $access_token = variable_get('hubspot_access_token', '');
-      $request = drupal_http_request("https://api.hubapi.com/contacts/v1/forms?access_token={$access_token}");
-    }
-  }
-
-  return array('value' => drupal_json_decode($request->data));
 }
