@@ -31,6 +31,10 @@ function hubspot_webform_menu() {
 function hubspot_webform_submit($form, &$form_state) {
   $node = $form['#node'];
 
+  if (empty($node)) {
+    return;
+  }
+
   $hubspot_portalid = variable_get('hubspot_portalid', '');
   $hubspot_form_guid = db_query_range("SELECT hubspot_guid FROM {hubspot} h WHERE h.nid = :nid", 0, 1, array(
     ':nid' => $node->nid,
@@ -68,8 +72,6 @@ function hubspot_webform_submit($form, &$form_state) {
   );
 
   $fields['hs_context'] = drupal_json_encode($hs_context);
-
-  echo '<pre>';print_r($fields);die;
 
   $result = hubspot_webform_insert_lead($hubspot_portalid, $hubspot_form_guid, $fields);
 
