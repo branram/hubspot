@@ -59,9 +59,6 @@ function hubspot_webform_submit($form, &$form_state) {
   $post_fields = automate_webform_values($form, $form_state);
   $fields = automate_map_webform_values($post_fields, $field_mappings);
 
-  echo '<pre>';print_r($field_mappings);
-  print_r($fields);die;
-
   // These fields must be submitted with each request.
   $hs_context = array(
     'hutk' => isset($_COOKIE['hubspotutk']) ? $_COOKIE['hubspotutk'] : '',
@@ -71,6 +68,8 @@ function hubspot_webform_submit($form, &$form_state) {
   );
 
   $fields['hs_context'] = drupal_json_encode($hs_context);
+
+  echo '<pre>';print_r($fields);die;
 
   $result = hubspot_webform_insert_lead($hubspot_portalid, $hubspot_form_guid, $fields);
 
