@@ -14,10 +14,10 @@
  *
  * @return array
  */
-function hubspot_form_settings($form, $form_state, $node) {
+function hubspot_webform_form_settings($form, $form_state, $node) {
   $form = array();
 
-  $hubspot_forms = _hubspot_get_forms();
+  $hubspot_forms = _hubspot_webform_get_forms();
 
   if (isset($hubspot_forms['error'])) {
     $form['webforms']['#description'] = $hubspot_forms['error'];
@@ -49,7 +49,7 @@ function hubspot_form_settings($form, $form_state, $node) {
         '#title' => t('HubSpot form'),
         '#type' => 'select',
         '#options' => $hubspot_form_options,
-        '#default_value' => _hubspot_default_value($nid),
+        '#default_value' => _hubspot_webform_default_value($nid),
       );
 
       foreach ($hubspot_form_options as $key => $value) {
@@ -74,7 +74,7 @@ function hubspot_form_settings($form, $form_state, $node) {
                   '#title' => $component['name'] . ': ' . $addressfield_value . ' (' . $component['type'] . ')',
                   '#type' => 'select',
                   '#options' => $hubspot_field_options[$key]['fields'],
-                  '#default_value' => _hubspot_default_value($nid, $key, $component['form_key'] . '_' . $addressfield_key),
+                  '#default_value' => _hubspot_webform_default_value($nid, $key, $component['form_key'] . '_' . $addressfield_key),
                 );
               }
             }
@@ -83,7 +83,7 @@ function hubspot_form_settings($form, $form_state, $node) {
                 '#title' => $component['name'] . ' (' . $component['type'] . ')',
                 '#type' => 'select',
                 '#options' => $hubspot_field_options[$key]['fields'],
-                '#default_value' => _hubspot_default_value($nid, $key, $component['form_key']),
+                '#default_value' => _hubspot_webform_default_value($nid, $key, $component['form_key']),
               );
             }
           }
@@ -101,9 +101,9 @@ function hubspot_form_settings($form, $form_state, $node) {
 }
 
 /**
- * Submit handler for hubspot_form_settings form.
+ * Submit handler for hubspot_webform_form_settings form.
  */
-function hubspot_form_settings_submit($form, &$form_state) {
+function hubspot_webform_form_settings_submit($form, &$form_state) {
   $txn = db_transaction();
 
   db_delete('hubspot')->condition('nid', $form_state['values']['nid'])->execute();

@@ -1,0 +1,8 @@
+name = HubSpot Webform integration
+description = "Provides HubSpot webform integration with Drupal."
+core = 7.x
+dependencies[] = automate
+dependencies[] = hubspot
+dependencies[] = webform (>=7.x-4.x)
+dependencies[] = libraries
+package = HubSpot
