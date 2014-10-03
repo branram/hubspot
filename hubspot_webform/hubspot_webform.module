@@ -24,24 +24,12 @@ function hubspot_webform_menu() {
 }
 
 /**
- * Implements hook_webform_submission_insert().
+ * Form handler for pardot_webform_form_alter().
  *
  * Intercepts the WebForm submission and send it off to HubSpot.
  */
-function hubspot_webform_webform_submission_insert($node, $submission) {
-  // Get the Webform version
-  $webform_path = drupal_get_path('module', 'webform') . '/webform.info';
-  $webform_info = drupal_parse_info_file($webform_path);
-
-  $matches = array();
-
-  if (preg_match('/^(\d+\.x-)?(\d+)\..*$/', $webform_info['version'], $matches)) {
-    $webform_major_version = $matches[2];
-  }
-
-  if ($submission->is_draft == 1) {
-    return;
-  }
+function hubspot_webform_submit($form, &$form_state) {
+  $node = $form['#node'];
 
   $hubspot_portalid = variable_get('hubspot_portalid', '');
   $hubspot_form_guid = db_query_range("SELECT hubspot_guid FROM {hubspot} h WHERE h.nid = :nid", 0, 1, array(
@@ -54,6 +42,26 @@ function hubspot_webform_webform_submission_insert($node, $submission) {
 
   $fields = array();
 
+  $sql = "SELECT webform_field, hubspot_field FROM {hubspot} h WHERE h.nid = :nid AND h.hubspot_guid = :guid AND hubspot_field != :empty";
+
+  $result = db_query($sql, array(
+    ':nid' => $node->nid,
+    ':guid' => $hubspot_form_guid,
+    ':empty' => '--donotmap--',
+  ));
+
+  $field_mappings = array();
+
+  while ($row = $result->fetchObject()) {
+    $field_mappings[$row->webform_field] = array('key' => $row->hubspot_field);
+  }
+
+  $post_fields = automate_webform_values($form, $form_state);
+  $fields = automate_map_webform_values($post_fields, $field_mappings);
+
+  echo '<pre>';print_r($field_mappings);
+  print_r($fields);die;
+
   // These fields must be submitted with each request.
   $hs_context = array(
     'hutk' => isset($_COOKIE['hubspotutk']) ? $_COOKIE['hubspotutk'] : '',
@@ -63,63 +71,6 @@ function hubspot_webform_webform_submission_insert($node, $submission) {
   );
 
   $fields['hs_context'] = drupal_json_encode($hs_context);
-
-  foreach ($node->webform['components'] as $data_id => $data) {
-    // Skip if there is no data
-    if (!isset($submission->data[$data_id])) {
-      continue;
-    }
-    else {
-      // Get the component value (submission structure differs from Webform 3 and 4).
-      // https://drupal.org/node/1609324#submission-structure
-      $component_data = $webform_major_version <= 3 ? $submission->data[$data_id]['value'] : $submission->data[$data_id];
-    }
-
-    $sql = "SELECT hubspot_field FROM {hubspot} h WHERE h.nid = :nid AND h.hubspot_guid = :guid AND h.webform_field = :webform_field";
-
-    if ($data['type'] == 'addressfield' && module_exists('addressfield_tokens')) {
-      $addressfield_fields = addressfield_tokens_components();
-      $addressfield_data = unserialize($component_data[0]);
-
-      foreach ($addressfield_fields as $addressfield_key => $addressfield_values) {
-        $result = db_query($sql, array(':nid' => $node->nid, ':guid' => $hubspot_form_guid, ':webform_field' => $data['form_key'] . '_' . $addressfield_key))->fetchField();
-
-        $result = db_query_range($sql, 0, 1, array(
-          ':nid' => $node->nid,
-          ':guid' => $hubspot_form_guid,
-          ':webform_field' => $data['form_key'] . '_' . $addressfield_key,
-        ))->fetchField();
-
-        if ($result && $result != '--donotmap--') {
-          $fields[$result] = $addressfield_data[$addressfield_key];
-        }
-      }
-    }
-    else {
-      $result = db_query_range($sql, 0, 1, array(
-        ':nid' => $node->nid,
-        ':guid' => $hubspot_form_guid,
-        ':webform_field' => $data['form_key'],
-      ))->fetchField();
-
-      if ($result && $result != '--donotmap--') {
-        if (count($component_data) > 1) {
-          $fields[$result] = '';
-          foreach ($component_data as $value) {
-            if (!empty($fields[$result])) {
-              $fields[$result] .= ';' . $value;
-            }
-            else {
-              $fields[$result] .= $value;
-            }
-          }
-        }
-        elseif (isset($component_data[0])) {
-          $fields[$result] = $component_data[0];
-        }
-      }
-    }
-  }
 
   $result = hubspot_webform_insert_lead($hubspot_portalid, $hubspot_form_guid, $fields);
 
@@ -266,7 +217,20 @@ function hubspot_webform_help($path, $arg) {
  * Implements hook_form_alter().
  */
 function hubspot_webform_form_alter(&$form, $form_state, $form_id) {
-  if (strstr($form_id, 'hubspot_admin_settings')) {
+  if (strstr($form_id, 'webform_client_form')) {
+    $nid = $form['details']['nid']['#value'];
+    if (empty($nid)) {
+      return;
+    }
+
+    // Check to see if this is configured for Hubspot
+    if (!db_query('SELECT count(*) FROM {hubspot} WHERE nid = :nid', array(':nid' => $nid))) {
+      return;
+    }
+
+    $form['#submit'][] = 'hubspot_webform_submit';
+  }
+  elseif (strstr($form_id, 'hubspot_admin_settings')) {
     module_load_include('inc', 'hubspot_webform', 'hubspot_webform.admin');
     _hubspot_webform_admin_settings($form);
   }
