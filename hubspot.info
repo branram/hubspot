@@ -2,6 +2,5 @@ name = HubSpot Drupal integration
 description = "Provides HubSpot leads API integration with Drupal. Works with Hubspots OAuth implementation"
 core = 7.x
 dependencies[] = automate
-dependencies[] = libraries
 configure = admin/config/sevices/hubspot
 package = HubSpot
